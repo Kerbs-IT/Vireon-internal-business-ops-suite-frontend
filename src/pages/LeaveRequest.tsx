@@ -23,7 +23,7 @@ export default function LeaveRequest() {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`p-2 rounded shadow  ${
+            className={`py-2 px-3 rounded shadow-md  ${
               mode === key ? "bg-gray-50 text-black" : "bg-white opacity-60"
             }`}
           >
