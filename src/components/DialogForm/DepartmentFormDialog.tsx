@@ -27,7 +27,7 @@ interface Department {
 
 interface DepartmentFormDialogProps {
   department?: Department;
-  trigger: React.ReactNode;
+  trigger: React.ReactElement;
   onSuccess: () => void; // tells the parent page to refetch the list
 }
 
