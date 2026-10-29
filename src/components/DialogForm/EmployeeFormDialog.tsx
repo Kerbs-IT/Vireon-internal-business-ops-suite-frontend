@@ -27,8 +27,6 @@ import api from "@/lib/api";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import useDepartments from "@/hooks/useDepartments";
-import useRoles from "@/hooks/useRoles";
 import { toast } from "../ui/toast";
 
 interface Employee {
@@ -101,7 +99,7 @@ export default function EmployeeFormDialog({
       first_name: employee?.first_name ?? "",
       last_name: employee?.last_name ?? "",
       email: employee?.email ?? "",
-      department_id: employee?.department_id ?? "",
+      department_id: employee?.department_id ?? undefined,
       role_id: employee?.role_id?.toString() ?? "",
       position: employee?.position ?? "",
       date_hired: employee?.date_hired
@@ -123,7 +121,7 @@ export default function EmployeeFormDialog({
           first_name: employee?.first_name ?? "",
           last_name: employee?.last_name ?? "",
           email: employee?.email ?? "",
-          department_id: employee?.department_id ?? "",
+          department_id: employee?.department_id ?? undefined,
           role_id: employee?.role_id?.toString() ?? "",
           position: employee?.position ?? "",
           date_hired: employee?.date_hired

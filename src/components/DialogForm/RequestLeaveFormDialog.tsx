@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactElement } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "../ui/textarea";
 
 interface RequestLeaveFormDialogProps {
-  trigger: React.ReactNode;
+  trigger: ReactElement;
 }
 
 function DatePicker({
@@ -77,9 +77,7 @@ type DatePickerProps = {
   disabled?: (date: Date) => boolean;
 };
 
-export default function RequestLeaveFormDialog({
-  trigger,
-}): RequestLeaveFormDialogProps {
+export default function RequestLeaveFormDialog({ trigger }: RequestLeaveFormDialogProps) {
   const [leaveMode, setLeaveMode] = useState("");
   const [startDate, setStartDate] = React.useState<Date>();
   const [endDate, setEndDate] = React.useState<Date>();
@@ -97,8 +95,8 @@ export default function RequestLeaveFormDialog({
             <FieldLabel>Leave Type</FieldLabel>
             <div className="buttons flex gap-1">
               {leaveType.map((type) => (
-                  <Button
-                      key={`${type}-button`}
+                <Button
+                  key={`${type}-button`}
                   onClick={() => setLeaveMode(type)}
                   className={`py-2 px-3 border hover:bg-orange-200 hover:text-orange-600 ${leaveMode === type ? "bg-orange-200 text-orange-600 border-orange-300" : "bg-slate-100 border-slate-200 text-black"}`}
                 >

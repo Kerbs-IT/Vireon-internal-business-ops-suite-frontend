@@ -12,6 +12,7 @@ import {
 import { Field, FieldLabel } from "../ui/field";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
+import type { ReactElement } from "react";
 
 interface LeaveRequest {
   id: number;
@@ -32,7 +33,7 @@ interface LeaveRequest {
 
 interface ReviewLeaveRequestDialogProps {
   leaveRequest?: LeaveRequest;
-  trigger: React.ReactNode;
+  trigger: ReactElement;
 }
 export default function ReviewLeaveRequestDialog({
   leaveRequest,
