@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -28,6 +28,7 @@ import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "../ui/toast";
+import { DeactivateEmployeeDialog } from "./DeactivateEmployeeDialog";
 
 interface Employee {
   id: number;
@@ -114,7 +115,7 @@ export default function EmployeeFormDialog({
 
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
+const [deactivateOpen, setDeactivateOpen] = useState(false);
    useEffect(() => {
       if (open) {
         reset({
@@ -174,250 +175,281 @@ export default function EmployeeFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={trigger} />
-      <DialogContent className="sm:max-w-sm ">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Edit Employee" : "Add Employee"}
-          </DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
-          {isEditMode
-            ? "Edit an employee account"
-            : "Create a new team member account"}
-        </DialogDescription>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger render={trigger} />
+        <DialogContent className="sm:max-w-lg ">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "Edit Employee" : "Add Employee"}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            {isEditMode
+              ? "Edit an employee account"
+              : "Create a new team member account"}
+          </DialogDescription>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              <Field>
-                <FieldLabel htmlFor="first-name">First Name</FieldLabel>
-                <Controller
-                  name="first_name"
-                  control={control}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      id="first-name"
-                      className="p-3 rounded border border-slate-300"
-                      placeholder="Enter your first name.."
-                    />
-                  )}
-                />
-                <FieldError message={errors.first_name?.message} />
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="last-name">Last Name</FieldLabel>
-                <Controller
-                  name="last_name"
-                  control={control}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      id="last-name"
-                      className="p-3 rounded border border-slate-300"
-                      placeholder="Enter your last name.."
-                    />
-                  )}
-                />
-                <FieldError message={errors.last_name?.message} />
-              </Field>
-            </div>
-
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Controller
-                name="email"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    {...field}
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    className="p-3 rounded border border-slate-300"
-                  />
-                )}
-              />
-              <FieldError message={errors.email?.message} />
-            </Field>
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-              <Field>
-                <FieldLabel htmlFor="department-dropdown">
-                  Department
-                </FieldLabel>
-                <Controller
-                  name="department_id"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      items={departmentItems}
-                    >
-                      <SelectTrigger id="department-dropdown" className="p-5">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {departmentItems.map((item) => (
-                            <SelectItem
-                              key={`${item.value}-department`}
-                              value={item.value}
-                            >
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FieldError message={errors.department_id?.message} />
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="role-dropdown">Role</FieldLabel>
-                <Controller
-                  name="role_id"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      items={roleItems}
-                    >
-                      <SelectTrigger id="role-dropdown" className="p-5">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {roleItems.map((item) => (
-                            <SelectItem
-                              key={`${item.value}-role`}
-                              value={String(item.value)}
-                            >
-                              {item.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FieldError message={errors.role_id?.message} />
-              </Field>
-            </div>
-
-            <Field>
-              <FieldLabel htmlFor="position">Position</FieldLabel>
-              <Controller
-                name="position"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    {...field}
-                    id="position"
-                    placeholder="e.g. Senior Developer"
-                    className="p-3 rounded border border-slate-300"
-                  />
-                )}
-              />
-              <FieldError message={errors.position?.message} />
-            </Field>
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-              <Field>
-                <FieldLabel>Date Hired</FieldLabel>
-                <Controller
-                  name="date_hired"
-                  control={control}
-                  render={({ field }) => (
-                    <Popover>
-                      <PopoverTrigger
-                        render={
-                          <Button
-                            type="button"
-                            variant="outline"
-                            data-empty={!field.value}
-                            className="p-5 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <ChevronDownIcon data-icon="inline-end" />
-                          </Button>
-                        }
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <FieldGroup>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                <Field>
+                  <FieldLabel htmlFor="first-name">First Name</FieldLabel>
+                  <Controller
+                    name="first_name"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        id="first-name"
+                        className="p-3 rounded border border-slate-300"
+                        placeholder="Enter your first name.."
                       />
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          defaultMonth={field.value}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                />
-                <FieldError message={errors.date_hired?.message} />
-              </Field>
+                    )}
+                  />
+                  <FieldError message={errors.first_name?.message} />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="last-name">Last Name</FieldLabel>
+                  <Controller
+                    name="last_name"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        id="last-name"
+                        className="p-3 rounded border border-slate-300"
+                        placeholder="Enter your last name.."
+                      />
+                    )}
+                  />
+                  <FieldError message={errors.last_name?.message} />
+                </Field>
+              </div>
 
               <Field>
-                <FieldLabel htmlFor="status-dropdown">Status</FieldLabel>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Controller
-                  name="status"
+                  name="email"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger id="status-dropdown" className="p-5">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem key="active-status" value="active">
-                            Active
-                          </SelectItem>
-                          <SelectItem key="inactive-status" value="inactive">
-                            Inactive
-                          </SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                    <input
+                      {...field}
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      className="p-3 rounded border border-slate-300"
+                    />
                   )}
                 />
-                <FieldError message={errors.status?.message} />
+                <FieldError message={errors.email?.message} />
               </Field>
-            </div>
-          </FieldGroup>
 
-          <DialogFooter className="mt-4">
-            <DialogClose
-              render={
-                <Button variant="outline" className="hover:cursor-pointer">
-                  Cancel
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+                <Field>
+                  <FieldLabel htmlFor="department-dropdown">
+                    Department
+                  </FieldLabel>
+                  <Controller
+                    name="department_id"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        items={departmentItems}
+                      >
+                        <SelectTrigger id="department-dropdown" className="p-5">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {departmentItems.map((item) => (
+                              <SelectItem
+                                key={`${item.value}-department`}
+                                value={item.value}
+                              >
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FieldError message={errors.department_id?.message} />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="role-dropdown">Role</FieldLabel>
+                  <Controller
+                    name="role_id"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        items={roleItems}
+                      >
+                        <SelectTrigger id="role-dropdown" className="p-5">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {roleItems.map((item) => (
+                              <SelectItem
+                                key={`${item.value}-role`}
+                                value={String(item.value)}
+                              >
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FieldError message={errors.role_id?.message} />
+                </Field>
+              </div>
+
+              <Field>
+                <FieldLabel htmlFor="position">Position</FieldLabel>
+                <Controller
+                  name="position"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      id="position"
+                      placeholder="e.g. Senior Developer"
+                      className="p-3 rounded border border-slate-300"
+                    />
+                  )}
+                />
+                <FieldError message={errors.position?.message} />
+              </Field>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+                <Field>
+                  <FieldLabel>Date Hired</FieldLabel>
+                  <Controller
+                    name="date_hired"
+                    control={control}
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger
+                          render={
+                            <Button
+                              type="button"
+                              variant="outline"
+                              data-empty={!field.value}
+                              className="p-5 justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <ChevronDownIcon data-icon="inline-end" />
+                            </Button>
+                          }
+                        />
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            defaultMonth={field.value}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  <FieldError message={errors.date_hired?.message} />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="status-dropdown">Status</FieldLabel>
+                  <Controller
+                    name="status"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger id="status-dropdown" className="p-5">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem key="active-status" value="active">
+                              Active
+                            </SelectItem>
+                            <SelectItem key="inactive-status" value="inactive">
+                              Inactive
+                            </SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <FieldError message={errors.status?.message} />
+                </Field>
+              </div>
+            </FieldGroup>
+
+            <DialogFooter className="mt-4 flex-row items-center sm:justify-between">
+              <div className="left">
+                {employee && (
+                  <button
+                    type="button"
+                    onClick={() => setDeactivateOpen(true)}
+                    className="text-red-500 flex items-center justify-center gap-1 text-xs hover:bg-slate-100 p-1 rounded"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="leading-none pb-0">Deactivate</span>
+                  </button>
+                )}
+              </div>
+              <div className="right flex gap-1">
+                <DialogClose
+                  render={
+                    <Button variant="outline" className="hover:cursor-pointer">
+                      Cancel
+                    </Button>
+                  }
+                />
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="bg-linear-to-r from-orange-600 border-0 outline-0 to-orange-400 py-1 px-2"
+                >
+                  {submitting
+                    ? "Saving..."
+                    : isEditMode
+                      ? "Save Changes"
+                      : "Add Employee"}
                 </Button>
-              }
-            />
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="bg-linear-to-r from-orange-600 border-0 outline-0 to-orange-400 p-2"
-            >
-              {submitting
-                ? "Saving..."
-                : isEditMode
-                  ? "Save Changes"
-                  : "Add Employee"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {employee && (
+        <DeactivateEmployeeDialog
+          open={deactivateOpen}
+          onOpenChange={setDeactivateOpen}
+          employee={employee}
+          onDeactivated={() => {
+            setDeactivateOpen(false); // close the alert dialog
+            setOpen(false); // close the employee dialog
+            onSuccess?.(); // refresh the list
+          }}
+        />
+      )}
+    </>
   );
 }

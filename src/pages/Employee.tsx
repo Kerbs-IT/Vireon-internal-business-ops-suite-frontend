@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import useDepartments from "@/hooks/useDepartments";
 import useEmployees from "@/hooks/useEmployees";
 import useRoles from "@/hooks/useRoles";
@@ -26,7 +27,12 @@ export default function Employee() {
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(
     "all-department",
   );
-  const { employees, refetch } = useEmployees();
+  const {
+    employees,
+    refetch,
+    loading: employeesLoading,
+    error: employeesError,
+  } = useEmployees();
 
   // fetch the roles here and remove the other fetch in the form to lessen the time consumed which affect the speed of the app
   const { roles } = useRoles();
@@ -126,7 +132,39 @@ export default function Employee() {
             </tr>
           </thead>
           <tbody className="overflow-auto">
-            {employees.map((emp) => (
+            {/* add skeletong loading here */}
+            {
+               employeesLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <tr key={i} className="border-b border-slate-100 last:border-0">
+                <td className="pl-6 py-3">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="size-7 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-40" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-6 w-16 rounded-full" /></td>
+                <td className="pr-6 py-3 text-end"><Skeleton className="ml-auto size-4" /></td>
+              </tr>
+            ))
+          ) : employeesError ? (
+            <tr>
+              <td colSpan={6} className="py-10 text-center text-sm text-red-500">
+                {employeesError}
+              </td>
+            </tr>
+          ) : employees.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="py-10 text-center text-sm text-slate-400">
+                No employees found.
+              </td>
+            </tr>
+          ) :
+              
+             ( employees.map((emp) => (
               <tr
                 className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
                 key={`employee-${emp.id}`}
@@ -181,7 +219,8 @@ export default function Employee() {
                   />
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
       </div>

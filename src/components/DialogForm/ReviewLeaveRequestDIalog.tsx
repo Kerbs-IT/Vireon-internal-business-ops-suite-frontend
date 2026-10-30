@@ -1,4 +1,4 @@
-import type React from "react";
+
 import {
   Dialog,
   DialogClose,
