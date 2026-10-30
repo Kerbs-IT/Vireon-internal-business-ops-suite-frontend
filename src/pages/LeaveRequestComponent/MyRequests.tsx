@@ -31,7 +31,7 @@ export default function MyRequests(){
               </div>
             </div>
             <div className="right-side">
-              <span className="bg-red-100 text-sm text-red-900 p-2 rounded-2xl border-1 border-red-200">
+              <span className="bg-red-100 text-sm text-red-900 p-2 rounded-2xl border border-red-200">
                 Rejected
               </span>
             </div>
@@ -49,7 +49,7 @@ export default function MyRequests(){
               </div>
             </div>
             <div className="right-side">
-              <span className="bg-green-100 text-sm text-green-900 p-2 rounded-2xl border-1 border-green-200">
+              <span className="bg-green-100 text-sm text-green-900 p-2 rounded-2xl border border-green-200">
                 Approved
               </span>
             </div>
@@ -66,7 +66,7 @@ export default function MyRequests(){
               </div>
             </div>
             <div className="right-side">
-              <span className="bg-green-100 text-sm text-green-900 p-2 rounded-2xl border-1 border-green-200">
+              <span className="bg-green-100 text-sm text-green-900 p-2 rounded-2xl border border-green-200">
                 Approved
               </span>
             </div>
