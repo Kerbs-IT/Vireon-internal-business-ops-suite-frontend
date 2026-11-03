@@ -16,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../ui/button";
 import useManagers from "@/hooks/useManagers";
-import ManagerCombobox from "../ManagerCombobox";
+import DropDownCombobox from "../DropDownCombobox";
 import api from "@/lib/api";
 
 interface Department {
@@ -133,10 +133,11 @@ export default function DepartmentFormDialog({
               name="manager_id"
               control={control}
               render={({ field }) => (
-                <ManagerCombobox
-                  managers={managers}
+                <DropDownCombobox
+                  list={managers}
                   value={field.value ?? undefined}
                   onChange={field.onChange}
+                  placeHolder="Select a manager"
                 />
               )}
             />

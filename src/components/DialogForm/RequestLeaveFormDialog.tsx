@@ -68,7 +68,7 @@ type DatePickerProps = {
   disabled?: (date: Date) => boolean;
 };
 
-function DatePicker({
+export function DatePicker({
   value,
   onChange,
   placeholder,
