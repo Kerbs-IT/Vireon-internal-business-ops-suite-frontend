@@ -7,9 +7,9 @@ import {
   ComboboxEmpty,
 } from "@/components/ui/combobox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
 
-interface ManagerOption {
+
+interface UserOption {
   id: number;
   first_name: string;
   last_name: string;
@@ -18,36 +18,38 @@ interface ManagerOption {
 
 
 
-export default function ManagerCombobox({
-  managers,
+export default function DropDownCombobox({
+  list,
   value,
   onChange,
+  placeHolder
 }: {
-  managers: ManagerOption[];
+  list: UserOption[];
   value?: number;
-  onChange: (id: number | null) => void;
+    onChange: (id: number | null) => void;
+    placeHolder: string;
 }) {
-  const selected = managers.find((m) => m.id === value) ?? null;
+  const selected = list.find((m) => m.id === value) ?? null;
 
   return (
     <Combobox
-      items={managers}
+      items={list}
       value={selected}
-      onValueChange={(item: ManagerOption | null) => onChange(item?.id ?? null)}
-      itemToStringLabel={(item: ManagerOption) =>
+      onValueChange={(item: UserOption | null) => onChange(item?.id ?? null)}
+      itemToStringLabel={(item: UserOption) =>
         item ? `${item.first_name} ${item.last_name}` : ""
       }
     >
-      <ComboboxInput placeholder="Select a manager" />
-      <ComboboxContent>
-        <ComboboxEmpty>No manager found.</ComboboxEmpty>
+      <ComboboxInput className="w-full" placeholder={placeHolder} />
+      <ComboboxContent >
+        <ComboboxEmpty>No record found.</ComboboxEmpty>
         <ComboboxList>
-          {(item: ManagerOption) => {
+          {(item: UserOption) => {
             const fullName = `${item.first_name} ${item.last_name}`;
             const initials =
               `${item.first_name[0]}${item.last_name[0]}`.toUpperCase();
             return (
-              <ComboboxItem key={item.id} value={item}>
+              <ComboboxItem key={item.id} value={item} className="hover:text-white">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="bg-indigo-400 text-white text-[10px]">
                     {initials}

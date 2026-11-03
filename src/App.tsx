@@ -1,23 +1,23 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
-import LoginPage from './pages/Login'
-import { Route, Routes } from 'react-router-dom'
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "./assets/vite.svg";
+import heroImg from "./assets/hero.png";
+import "./App.css";
+import LoginPage from "./pages/Login";
+import { Route, Routes } from "react-router-dom";
 
-import Dashboard from './pages/Dashboard'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import GuestRoute from './components/GuestRoute'
-import { Layout } from './Layout'
-import NotFound from './components/NotFound'
-import Employee from './pages/Employee'
-import Department from './pages/Department'
-import LeaveRequest from './pages/LeaveRequest'
+import Dashboard from "./pages/Dashboard";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import GuestRoute from "./components/GuestRoute";
+import { Layout } from "./Layout";
+import NotFound from "./components/NotFound";
+import Employee from "./pages/Employee";
+import Department from "./pages/Department";
+import LeaveRequest from "./pages/LeaveRequest";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 
 function App() {
-
-
   return (
     <>
       <Routes>
@@ -69,10 +69,23 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/leave-requests" element={
+          <Route
+            path="/leave-requests"
+            element={
               <ProtectedRoute>
                 <LeaveRequest />
-              </ProtectedRoute>} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <Projects />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />}></Route>
         </Route>
       </Routes>
@@ -80,4 +93,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

@@ -192,7 +192,7 @@ export default function Employee() {
                   {emp.department?.name ?? "none"}
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-500 capitalize">
-                  {emp.role?.name ?? "none"}
+                  {emp.position?? "none"}
                 </td>
                 <td className="px-4 py-3">
                   <span
