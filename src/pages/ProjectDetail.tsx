@@ -142,7 +142,8 @@ function ProjectDetail() {
 
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
 
   // always read the task from the list, so a new comment shows up immediately
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
@@ -261,12 +262,21 @@ function ProjectDetail() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onEdit={() => {
-          setSheetOpen(false);
-          // open your Edit Task dialog here
+          setSheetOpen(false); // close the sheet
+          setEditOpen(true); // open the edit dialog
         }}
         onAddComment={addComment}
         currentUserInitials="AR"
       />
+
+      {selectedTask && (
+        <ProjectTaskFormDialog
+          key={selectedTask.id}
+          task={selectedTask}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
     </div>
   );
 }
