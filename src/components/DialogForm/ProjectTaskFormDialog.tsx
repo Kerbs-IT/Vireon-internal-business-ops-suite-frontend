@@ -30,6 +30,7 @@ import DropDownCombobox from "../DropDownCombobox";
 import useEmployees from "@/hooks/useEmployees";
 import { Button } from "../ui/button";
 import { cn } from "cn";
+import type { Task } from "@/components/sampleTask";
 
 interface ProjectTask {
   id: number;
@@ -43,8 +44,11 @@ interface ProjectTask {
 }
 
 interface ProjectTaskFormDialogProps {
-  task?: ProjectTask;
-  trigger: React.ReactElement;
+  task?: Task;
+  trigger?: React.ReactElement;
+  open?: boolean; // present = controlled by the parent
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 const priorityItems = {
@@ -63,21 +67,29 @@ const taskSchema = z.object({
   project_id: z.number(),
   title: z
     .string()
-    .min(10, "Title must be at leash 10 characters")
-    .max(50, "Title must be at leash 50 characters"),
+    .min(10, "Title must be at least 10 characters")
+    .max(50, "Title must be at most 50 characters"),
   description: z
     .string()
-    .min(20, "Title must be at leash 20 characters")
-    .max(255, "Title must be at leash 255 characters"),
-  assigned_to: z.number(),
-  status: z.string(),
-  priority: z.string(),
-  due_date: z.date(),
+    .min(20, "Description must be at least 20 characters")
+    .max(255, "Description must be at most 255 characters"),
+  assigned_to: z.number({ error: "Select a team member" }),
+  status: z.enum(["todo", "in_progress", "review", "done"]),
+  priority: z.enum(["low", "medium", "high"]),
+  due_date: z.string().min(1, "Pick a due date"),
 });
+
+type TaskValues = z.infer<typeof taskSchema>;
 
 type taskValue = z.infer<typeof taskSchema>;
 
-function ProjectTaskFormDialog({ trigger, task }: ProjectTaskFormDialogProps) {
+function ProjectTaskFormDialog({
+  trigger,
+  task,
+  open,
+  onOpenChange,
+  onSuccess,
+}: ProjectTaskFormDialogProps) {
   const {
     control,
     handleSubmit,
@@ -87,37 +99,55 @@ function ProjectTaskFormDialog({ trigger, task }: ProjectTaskFormDialogProps) {
   } = useForm<taskValue>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      project_id: task?.project_id ?? undefined,
-      title: task?.title ?? undefined,
-      description: task?.description ?? undefined,
-      assigned_to: task?.assigned_to ?? undefined,
-      status: task?.status ?? undefined,
-      priority: task?.priority ?? undefined,
-      due_date: task?.due_date ?? undefined,
+      project_id: task?.project_id,
+      title: task?.title ?? "",
+      description: task?.description ?? "",
+      assigned_to: task?.assigned_to,
+      status: task?.status ?? "todo",
+      priority: task?.priority ?? "medium",
+      due_date: task?.due_date?.slice(0, 10) ?? "",
     },
   });
-  const [priority, setPriority] = useState("");
-    const { employees } = useEmployees();
-    const [submitting, setSubmitting] = useState(false);
+ 
+  const { employees } = useEmployees();
+  const [submitting, setSubmitting] = useState(false);
+  const isEditMode = !!task;
+
+  // use the parent's state if it gave one, otherwise keep our own
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+
+  function setOpen(next: boolean) {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  }
 
   return (
-    <Dialog>
-      <DialogTrigger render={trigger} />
+    <Dialog open={isOpen} onOpenChange={setOpen}>
+      {trigger && <DialogTrigger render={trigger} />}
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="mb-3 border-b ">
           <DialogTitle>{task ? "Edit Task" : "Add New Task"}</DialogTitle>
           <DialogDescription>
-            {task ? task.title : "Create new task to the project"}
+            {isEditMode ? task.title : "Create new task to the project"}
           </DialogDescription>
         </DialogHeader>
         <form action="">
           <Field className="mb-3">
             <FieldLabel>Task Title</FieldLabel>
-            <input
-              type="text"
+            <Controller
               name="title"
-              className="p-2 rounded border border-slate-300"
-              placeholder="Enter task title..."
+              control={control}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  id="title"
+                  className="p-2 rounded border border-slate-300"
+                  placeholder="Enter task title..."
+                />
+              )}
             />
           </Field>
 
@@ -139,28 +169,31 @@ function ProjectTaskFormDialog({ trigger, task }: ProjectTaskFormDialogProps) {
           <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-2">
             <Field>
               <FieldLabel>Status</FieldLabel>
-              <Select
-                value={priority}
-                onValueChange={(val) => setPriority(val)}
-                items={priorityItems}
-              >
-                <SelectTrigger
-                  id="checkout-exp-month-ts6"
-                  className="p-4.5 bg-white min-w-30"
-                  value="All-status"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {Object.entries(priorityItems).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="priority"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(val) => field.onChange(val ?? "medium")}
+                    items={priorityItems}
+                  >
+                    <SelectTrigger className="p-4.5 bg-white min-w-30">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {Object.entries(priorityItems).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <ErrorText message={errors.priority?.message} />
               <ErrorText message={errors.status?.message} />
             </Field>
             <Field>
