@@ -5,14 +5,19 @@ export interface Employee {
   position: string;
 }
 
-export interface TaskComment {
+export type TaskComment = {
   id: number;
-  task_id: number;
-  user_id: number;
-  text: string;
+  task_id: number;   // optional, the API sends it but nothing reads it
+  user_id: number;   // same
+  comments: string;
   created_at: string;
-  user: Employee;
-}
+  user: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    position?: string; // only if you show it; the API selects it
+  };
+};
 
 export interface Task {
   id: number;
@@ -54,7 +59,7 @@ export const tasks: Task[] = [
         id: 4,
         task_id: 1,
         user_id: 2,
-        text: "Looks good so far. Please add the dark mode variants before handoff.",
+        comments: "Looks good so far. Please add the dark mode variants before handoff.",
         created_at: "2026-11-03T14:00:00.000000Z",
         user: mika,
       },
@@ -109,7 +114,7 @@ export const tasks: Task[] = [
         id: 1,
         task_id: 4,
         user_id: 1,
-        text: "Backend team confirmed the new endpoints are ready for staging. Let's prioritize the error handling patterns first.",
+        comments: "Backend team confirmed the new endpoints are ready for staging. Let's prioritize the error handling patterns first.",
         created_at: "2026-11-04T08:00:00.000000Z",
         user: ana,
       },
@@ -117,7 +122,7 @@ export const tasks: Task[] = [
         id: 2,
         task_id: 4,
         user_id: 2,
-        text: "On it. I'll set up the retry logic with exponential backoff. Should have a draft by EOD.",
+        comments: "On it. I'll set up the retry logic with exponential backoff. Should have a draft by EOD.",
         created_at: "2026-11-04T09:00:00.000000Z",
         user: mika,
       },
@@ -125,7 +130,7 @@ export const tasks: Task[] = [
         id: 3,
         task_id: 4,
         user_id: 3,
-        text: "Can we include the batch endpoint too? The marketing team needs bulk export functionality.",
+        comments: "Can we include the batch endpoint too? The marketing team needs bulk export functionality.",
         created_at: "2026-11-04T09:30:00.000000Z",
         user: james,
       },

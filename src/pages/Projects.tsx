@@ -108,6 +108,7 @@ function Projects() {
         </div>
         <div className="right">
           <ProjectFormDialog
+            
             triggerIsButton={false}
             onSuccess={refetch}
             trigger={

@@ -2,10 +2,20 @@ import ProjectTaskFormDialog from "@/components/DialogForm/ProjectTaskFormDialog
 import { Button } from "@/components/ui/button";
 import { Progress, ProgressValue } from "@/components/ui/progress";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { format, parseISO, startOfToday } from "date-fns";
-import { tasks as initialTasks, type Task } from "../components/sampleTask";
 import TaskDetailSheet from "../components/sheet/TaskDetailSheet";
+import { useParams } from "react-router-dom";
+import api from "@/lib/api";
+
+import type { Project } from "@/types/project";
+import { formatDate } from "@/helper/formatDate";
+import { Skeleton } from "@/components/ui/skeleton";
+import useProjectTask from "@/hooks/useProjectTask";
+import { AuthContext } from "@/context/AuthContext";
+import axios from "axios";
+import { toast } from "@/components/ui/toast";
+import type { Task } from "@/types/task";
 
 type Member = {
   id: number;
@@ -136,96 +146,152 @@ function TaskCard({
 }
 
 function ProjectDetail() {
+  const { id } = useParams();
   const MAX = 3;
-  const visible = members.slice(0, MAX);
-  const extra = members.length - MAX;
+  
 
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  // const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-    const [sheetOpen, setSheetOpen] = useState(false);
-    const [editOpen, setEditOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [projectDetail, setProjectDetail] = useState<Project>();
+  const [projectDetailLoading, setProjectDetailLoading] = useState(true);
+  // get the current user initial
+  const { user } = useContext(AuthContext);
+   const first = user?.first_name?.charAt(0) ?? "M";
+   const last = user?.last_name?.charAt(0) ?? "E";
+  const currentUserInitial = `${first}${last}`.toUpperCase().trim();
+
+  const visible = projectDetail
+    ? projectDetail?.members.slice(0, MAX)
+    : members.slice(0, MAX);
+  const extra = projectDetail? projectDetail.members.length - MAX : members.length - MAX;
 
   // always read the task from the list, so a new comment shows up immediately
+  const { tasks,refetch } = useProjectTask(Number(id));
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
+  
 
   function openTask(task: Task) {
     setSelectedTaskId(task.id);
     setSheetOpen(true);
   }
 
-  // local only for now. Replace the body with api.post(...) when the backend exists
-  async function addComment(taskId: number, text: string) {
-    const newComment = {
-      id: Date.now(),
-      task_id: taskId,
-      user_id: CURRENT_USER.id,
-      text,
-      created_at: new Date().toISOString(),
-      user: CURRENT_USER,
-    };
+  useEffect(() => {
+    setProjectDetailLoading(true);
+    api
+      .get(`/projects/${id}`)
+      .then((res) => setProjectDetail(res.data))
+      .finally(() => {setProjectDetailLoading(false)});
+  }, []);
 
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId ? { ...t, comments: [...t.comments, newComment] } : t,
-      ),
-    );
+  // local only for now. Replace the body with api.post(...) when the backend exists
+async function addComment(taskId: number, text: string) {
+  try {
+    await api.post(`/tasks/${taskId}/comments`, { comments: text });
+    await refetch(); // reload tasks, including the new comment
+  } catch (error) {
+    let description = "Unable to add the comment.";
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data;
+      description =
+        (data?.errors && Object.values<string[]>(data.errors)[0]?.[0]) ||
+        data?.message ||
+        description;
+    }
+    toast.add({ type: "error", description });
+    throw error;
   }
+}
 
   return (
     <div className="w-full">
-      <div className="mb-4 bg-orange-50 rounded-md p-3">
-        <div className="mb-1 grid grid-cols-1 xl:grid-cols-2">
-          <div className="left">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="bg-orange-100 text-orange-600 p-2 rounded-full text-xs">
-                Active
-              </span>
-              <p className="text-slate-500 text-xs">Due Mar 28, 2026</p>
+      {projectDetailLoading ? (
+        <div className="mb-4 bg-white rounded-md p-3">
+          <div className="mb-1 grid grid-cols-1 xl:grid-cols-2">
+            <div className="left">
+              <div className="mb-2 flex items-center gap-2">
+                <Skeleton className="h-5 w-20 " />
+                <Skeleton className="h-5 w-20 " />
+              </div>
+              <h1 className="text-3xl font-bold mb-2 ">
+                <Skeleton className="h-10 w-90 " />
+              </h1>
+              <Skeleton className="h-5 w-150 mb-2" />
+              <Skeleton className="h-5 w-120 mb-2" />
             </div>
-            <h1 className="text-3xl font-bold">Q1 Product Launch</h1>
-            <p className="text-wrap w-full line-clamp-2">
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Possimus
-              tempore porro repellat at voluptates a iusto odio sapiente harum,
-              voluptatibus, distinctio, in eligendi expedita mollitia quae
-              temporibus! Hic, cumque accusamus.
-            </p>
-          </div>
-          <div className="right flex gap-2 items-center xl:justify-end md:justify-start">
-            <div className="flex -space-x-1">
-              {visible.map((m, i) => (
-                <div
-                  key={m.id}
-                  title={`${m.first_name} ${m.last_name}`}
-                  className={`flex size-6 items-center justify-center rounded-full text-xs font-medium text-white ring-2 ring-white ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
-                >
-                  {m.first_name.charAt(0)}
-                  {m.last_name.charAt(0)}
-                </div>
-              ))}
-              {extra > 0 && (
-                <div className="flex size-6 items-center justify-center rounded-full bg-white border border-white text-xs text-black ring-2 ring-white">
-                  +{extra}
-                </div>
-              )}
+            <div className="right flex gap-2 items-center xl:justify-end md:justify-start">
+              <div className="flex -space-x-1">
+                <Skeleton className="h-5 w-30 " />
+              </div>
+              <Skeleton className="h-5 w-30 " />
             </div>
-            <ProjectTaskFormDialog
-              trigger={
-                <Button className="bg-linear-to-r from-orange-600 to-orange-400 hover:cursor-pointer">
-                  <Plus />
-                  Add Task
-                </Button>
-              }
-            />
           </div>
+          <Skeleton className="h-5 w-10 flex justify-self-end mb-2" />
+          <Skeleton className="h-3 w-full " />
         </div>
-        {/* progress bar */}
-        <Progress value={56} className="mb-3 w-full">
-          <ProgressValue />
-        </Progress>
-      </div>
+      ) : (
+        <div className="mb-4 bg-orange-50 rounded-md p-3">
+          <div className="mb-1 grid grid-cols-1 xl:grid-cols-2">
+            <div className="left">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="bg-orange-100 text-orange-600 p-2 capitalize rounded-full text-xs">
+                  {projectDetail?.status ?? "none"}
+                </span>
+                <p className="text-slate-500 text-xs">
+                  Due{" "}
+                  {projectDetail
+                    ? formatDate(projectDetail?.end_date)
+                    : "Mar 28, 2026"}
+                </p>
+              </div>
+              <h1 className="text-3xl font-bold mb-2 capitalize">
+                {projectDetail?.name ?? "Project Title"}
+              </h1>
+              <p className="text-wrap w-full line-clamp-2">
+                {projectDetail?.description ?? "----"}
+              </p>
+            </div>
+            <div className="right flex gap-2 items-center xl:justify-end md:justify-start">
+              <div className="flex -space-x-1">
+                {visible.map((m, i) => (
+                  <div
+                    key={m.id}
+                    title={`${m.first_name} ${m.last_name}`}
+                    className={`flex size-6 items-center justify-center rounded-full text-xs font-medium text-white ring-2 ring-white ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+                  >
+                    {m.first_name.charAt(0)}
+                    {m.last_name.charAt(0)}
+                  </div>
+                ))}
+                {extra > 0 && (
+                  <div className="flex size-6 items-center justify-center rounded-full bg-white border border-white text-xs text-black ring-2 ring-white">
+                    +{extra}
+                  </div>
+                )}
+              </div>
+              <ProjectTaskFormDialog
+                projectId={projectDetail?.id ?? null}
+                trigger={
+                  <Button className="bg-linear-to-r from-orange-600 to-orange-400 hover:cursor-pointer">
+                    <Plus />
+                    Add Task
+                  </Button>
+                }
+                members={projectDetail?.members}
+                onSuccess={refetch}
+              />
+            </div>
+          </div>
+          {/* progress bar */}
+          <Progress value={56} className="mb-3 w-full">
+            <ProgressValue />
+          </Progress>
+        </div>
+      )}
 
       {/* board */}
-      <div className="mb-2 grid gap-2 grid-cols-1 xl:grid-cols-4">
+      <div className="mb-2 grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
         {COLUMNS.map((col) => {
           const columnTasks = tasks.filter((t) => t.status === col.key);
 
@@ -247,7 +313,7 @@ function ProjectDetail() {
                 </span>
               </div>
 
-              <div className="tasks min-h-100 rounded-md bg-white p-3">
+              <div className="tasks min-h-auto xl:min-h-100 md:min-h-100 rounded-md bg-white p-3">
                 {columnTasks.map((task) => (
                   <TaskCard key={task.id} task={task} onOpen={openTask} />
                 ))}
@@ -266,15 +332,18 @@ function ProjectDetail() {
           setEditOpen(true); // open the edit dialog
         }}
         onAddComment={addComment}
-        currentUserInitials="AR"
+        currentUserInitials={currentUserInitial}
       />
 
       {selectedTask && (
         <ProjectTaskFormDialog
+          projectId={projectDetail.id}
+          members={projectDetail?.members ?? []}
           key={selectedTask.id}
           task={selectedTask}
           open={editOpen}
           onOpenChange={setEditOpen}
+          onSuccess={refetch}
         />
       )}
     </div>

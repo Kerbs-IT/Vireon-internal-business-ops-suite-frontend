@@ -16,31 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import type { Task } from "../sampleTask";
+import type { Task } from "@/types/task";
 
-export type TaskComment = {
-  id: number;
-  text: string;
-  created_at: string;
-  user: { id: number; first_name: string; last_name: string };
-};
 
-// export type Task = {
-//   id: number;
-//   title: string;
-//   description: string | null;
-//   status: "todo" | "in_progress" | "review" | "done";
-//   priority: "low" | "medium" | "high";
-//   due_date: string;
-//   progress: number;
-//   assignee: {
-//     id: number;
-//     first_name: string;
-//     last_name: string;
-//     position: string;
-//   } | null;
-//   comments: TaskComment[];
-// };
 
 interface TaskDetailSheetProps {
   task: Task | null;
@@ -113,18 +91,20 @@ export default function TaskDetailSheet({
   const [comment, setComment] = useState("");
   const [sending, setSending] = useState(false);
 
-  async function handleSend() {
-    const text = comment.trim();
-    if (!task || !text || sending) return;
+ async function handleSend() {
+   const text = comment.trim();
+   if (!task || !text || sending) return;
 
-    setSending(true);
-    try {
-      await onAddComment?.(task.id, text);
-      setComment("");
-    } finally {
-      setSending(false);
-    }
-  }
+   setSending(true);
+   try {
+     await onAddComment?.(task.id, text);
+     setComment("");
+   } catch {
+     // the error toast was already shown in addComment
+   } finally {
+     setSending(false);
+   }
+ }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -236,11 +216,11 @@ export default function TaskDetailSheet({
                     Comments
                   </h4>
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1 text-[10px] leading-none text-slate-500">
-                    {task.comments.length}
+                    {task.comments?.length}
                   </span>
                 </div>
 
-                {task.comments.length === 0 ? (
+                {task.comments?.length === 0 ? (
                   <p className="py-4 text-center text-sm text-slate-400">
                     No comments yet. Start the conversation.
                   </p>
@@ -266,7 +246,7 @@ export default function TaskDetailSheet({
                             </span>
                           </div>
                           <p className="wrap-break-word text-sm text-slate-600">
-                            {c.text}
+                            {c.comments}
                           </p>
                         </div>
                       </li>
