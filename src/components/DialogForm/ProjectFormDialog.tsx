@@ -25,32 +25,18 @@ import { DatePicker } from "./RequestLeaveFormDialog";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "cn";
-import { Check } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { format, parseISO } from "date-fns";
 import axios from "axios";
 import api from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import useEmployees from "@/hooks/useEmployees";
+import { DeactivateProjectDialog } from "./DeactivateProjectDialog";
+import type { Project } from "@/types/project";
 
 
 
-interface ProjectMembers {
-  id: number;
-  first_name: string;
-  last_name: string;
-  pivot: { project_id: number; user_id: number };
-}
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  status: "active" | "completed" | "on_hold";
-  end_date: string;
-  created_by: number;
-  members: ProjectMembers[];
-}
 // what the API sends
 
 interface ProjectFormDialogProps {
@@ -114,6 +100,7 @@ function ProjectFormDialog({
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { employees } = useEmployees();
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
 
   const {
     control,
@@ -174,200 +161,229 @@ function ProjectFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={trigger}  />
-      <DialogContent className="xl:max-w-lg lg:max-w-lg">
-        <DialogHeader className="pb-5 border-b">
-          <DialogTitle>
-            {isEditMode ? "Edit Project" : "New Project"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode
-              ? `Update ${project?.name} details`
-              : "Create a project and invite your team"}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger render={trigger} />
+        <DialogContent className="xl:max-w-lg lg:max-w-lg">
+          <DialogHeader className="pb-5 border-b">
+            <DialogTitle>
+              {isEditMode ? "Edit Project" : "New Project"}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditMode
+                ? `Update ${project?.name} details`
+                : "Create a project and invite your team"}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Field className="mb-3">
-            <FieldLabel>Project Name</FieldLabel>
-            <Controller
-              name="name"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  id="name"
-                  className="p-2 rounded border border-slate-300"
-                  placeholder="Enter project name.."
-                />
-              )}
-            />
-            <ErrorText message={errors.name?.message} />
-          </Field>
-
-          <Field className="mb-3">
-            <FieldLabel>Description</FieldLabel>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <Textarea
-                  {...field}
-                  id="description"
-                  className="p-2 rounded border field-sizing-fixed w-full min-h-20 wrap-break-word border-slate-300"
-                  placeholder="What is this project about?"
-                />
-              )}
-            />
-            <ErrorText message={errors.description?.message} />
-          </Field>
-
-          <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-2">
-            <Field>
-              <FieldLabel>Status</FieldLabel>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Field className="mb-3">
+              <FieldLabel>Project Name</FieldLabel>
               <Controller
-                name="status"
+                name="name"
                 control={control}
                 render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={(val) => field.onChange(val ?? "active")}
-                    items={statusItems}
-                  >
-                    <SelectTrigger className="p-4.5 bg-white min-w-30">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {Object.entries(statusItems).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <ErrorText message={errors.status?.message} />
-            </Field>
-
-            <Field>
-              <FieldLabel>End Date</FieldLabel>
-              <Controller
-                name="end_date"
-                control={control}
-                render={({ field }) => (
-                  <DatePicker
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder="Enter the date"
-                    disabled={(date) =>
-                      date < new Date(new Date().setHours(0, 0, 0, 0))
-                    }
+                  <input
+                    {...field}
+                    id="name"
+                    className="p-2 rounded border border-slate-300"
+                    placeholder="Enter project name.."
                   />
                 )}
               />
-              <ErrorText message={errors.end_date?.message} />
+              <ErrorText message={errors.name?.message} />
             </Field>
-          </div>
 
-          {/* team members */}
-          <Field>
-            <FieldLabel>Team members</FieldLabel>
-            <Controller
-              name="members"
-              control={control}
-              render={({ field }) => {
-                const toggle = (id: number) =>
-                  field.onChange(
-                    field.value.includes(id)
-                      ? field.value.filter((v) => v !== id)
-                      : [...field.value, id],
-                  );
+            <Field className="mb-3">
+              <FieldLabel>Description</FieldLabel>
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <Textarea
+                    {...field}
+                    id="description"
+                    className="p-2 rounded border field-sizing-fixed w-full min-h-20 wrap-break-word border-slate-300"
+                    placeholder="What is this project about?"
+                  />
+                )}
+              />
+              <ErrorText message={errors.description?.message} />
+            </Field>
 
-                return (
-                  <div className="flex flex-col w-full border rounded-md p-3 gap-2 overflow-y-auto max-h-50">
-                    {employees.map((member) => {
-                      const selected = field.value.includes(member.id);
+            <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+              <Field>
+                <FieldLabel>Status</FieldLabel>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(val) => field.onChange(val ?? "active")}
+                      items={statusItems}
+                    >
+                      <SelectTrigger className="p-4.5 bg-white min-w-30">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {Object.entries(statusItems).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <ErrorText message={errors.status?.message} />
+              </Field>
 
-                      return (
-                        <button
-                          key={member.id}
-                          type="button"
-                          role="checkbox"
-                          aria-checked={selected}
-                          onClick={() => toggle(member.id)}
-                          className={cn(
-                            "flex items-center justify-between gap-2 rounded p-2 text-left transition-colors",
-                            selected ? "bg-orange-50" : "hover:bg-slate-50",
-                          )}
-                        >
-                          <div className="flex gap-3 items-center">
-                            <div className="w-7 h-7 flex items-center justify-center rounded-full text-white text-xs font-medium bg-red-400">
-                              {member.first_name.charAt(0)}
-                              {member.last_name.charAt(0)}
-                            </div>
-                            <div className="team-info">
-                              <span className="text-sm font-medium text-slate-700">
-                                {member.first_name} {member.last_name.charAt(0)}
-                                .
-                              </span>
-                              <p className="text-slate-400 text-xs">
-                                {member.position ?? "none"}
-                              </p>
-                            </div>
-                          </div>
+              <Field>
+                <FieldLabel>End Date</FieldLabel>
+                <Controller
+                  name="end_date"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Enter the date"
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
+                    />
+                  )}
+                />
+                <ErrorText message={errors.end_date?.message} />
+              </Field>
+            </div>
 
-                          <span
+            {/* team members */}
+            <Field>
+              <FieldLabel>Team members</FieldLabel>
+              <Controller
+                name="members"
+                control={control}
+                render={({ field }) => {
+                  const toggle = (id: number) =>
+                    field.onChange(
+                      field.value.includes(id)
+                        ? field.value.filter((v) => v !== id)
+                        : [...field.value, id],
+                    );
+
+                  return (
+                    <div className="flex flex-col w-full border rounded-md p-3 gap-2 overflow-y-auto max-h-50">
+                      {employees.map((member) => {
+                        const selected = field.value.includes(member.id);
+
+                        return (
+                          <button
+                            key={member.id}
+                            type="button"
+                            role="checkbox"
+                            aria-checked={selected}
+                            onClick={() => toggle(member.id)}
                             className={cn(
-                              "flex size-5 items-center justify-center rounded-full border",
-                              selected
-                                ? "bg-orange-500 border-orange-500 text-white"
-                                : "border-slate-300",
+                              "flex items-center justify-between gap-2 rounded p-2 text-left transition-colors",
+                              selected ? "bg-orange-50" : "hover:bg-slate-50",
                             )}
                           >
-                            {selected && <Check className="size-3" />}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                );
-              }}
-            />
-            <ErrorText message={errors.members?.message} />
-          </Field>
+                            <div className="flex gap-3 items-center">
+                              <div className="w-7 h-7 flex items-center justify-center rounded-full text-white text-xs font-medium bg-red-400">
+                                {member.first_name.charAt(0)}
+                                {member.last_name.charAt(0)}
+                              </div>
+                              <div className="team-info">
+                                <span className="text-sm font-medium text-slate-700">
+                                  {member.first_name}{" "}
+                                  {member.last_name.charAt(0)}.
+                                </span>
+                                <p className="text-slate-400 text-xs">
+                                  {member.position ?? "none"}
+                                </p>
+                              </div>
+                            </div>
 
-          <DialogFooter className="mt-4">
-            <DialogClose
-              render={
+                            <span
+                              className={cn(
+                                "flex size-5 items-center justify-center rounded-full border",
+                                selected
+                                  ? "bg-orange-500 border-orange-500 text-white"
+                                  : "border-slate-300",
+                              )}
+                            >
+                              {selected && <Check className="size-3" />}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                }}
+              />
+              <ErrorText message={errors.members?.message} />
+            </Field>
+
+            <DialogFooter className="mt-4 flex-row items-center sm:justify-between">
+              <div className="left">
+                {project && (
+                  <button
+                    type="button"
+                    onClick={() => setDeactivateOpen(true)}
+                    className="text-red-500 flex items-center justify-center gap-1 text-xs transition duration-300 ease-in-out hover:cursor-pointer hover:bg-red-50 p-1.5 rounded"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="leading-none pb-0">Deactivate</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="right flex flex-row gap-2">
+                <DialogClose
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={submitting}
+                      className="hover:cursor-pointer"
+                    >
+                      Cancel
+                    </Button>
+                  }
+                />
                 <Button
-                  type="button"
-                  variant="outline"
+                  type="submit"
                   disabled={submitting}
-                  className="hover:cursor-pointer"
+                  className="bg-linear-to-r from-orange-600 border-0 outline-0 to-orange-400 p-2"
                 >
-                  Cancel
+                  {submitting
+                    ? "Saving..."
+                    : isEditMode
+                      ? "Save Changes"
+                      : "Create Project"}
                 </Button>
-              }
-            />
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="bg-linear-to-r from-orange-600 border-0 outline-0 to-orange-400 p-2"
-            >
-              {submitting
-                ? "Saving..."
-                : isEditMode
-                  ? "Save Changes"
-                  : "Create Project"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {project && (
+        <DeactivateProjectDialog
+          open={deactivateOpen}
+          onOpenChange={setDeactivateOpen}
+          project={project}
+          onDeactivated={() => {
+            setDeactivateOpen(false); // close the alert dialog
+            setOpen(false); // close the employee dialog
+            onSuccess?.();
+          }}
+        />
+      )}
+    </>
   );
 }
 

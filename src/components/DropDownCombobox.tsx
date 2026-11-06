@@ -7,6 +7,7 @@ import {
   ComboboxEmpty,
 } from "@/components/ui/combobox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { ProjectMembers } from "@/types/project";
 
 
 interface UserOption {
