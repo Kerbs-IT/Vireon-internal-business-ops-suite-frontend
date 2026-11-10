@@ -87,7 +87,6 @@ const taskSchema = z.object({
   due_date: z.string().min(1, "Pick a due date"),
 });
 
-type TaskValues = z.infer<typeof taskSchema>;
 
 type taskValue = z.infer<typeof taskSchema>;
 

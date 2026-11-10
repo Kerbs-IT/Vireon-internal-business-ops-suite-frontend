@@ -1,17 +1,8 @@
 import api from "@/lib/api";
+import type { Employee } from "@/types/employee";
 import { useCallback, useEffect, useState } from "react";
 
-interface Employee {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  department_id: number;
-  role_id: number;
-  position: string;
-  date_hired: string;
-  status: "active" | "inactive";
-}
+
 
 export default function useEmployees() {
     const [employees, setEmployees] = useState<Employee[]>([]);
