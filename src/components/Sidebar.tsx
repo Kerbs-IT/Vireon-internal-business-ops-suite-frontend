@@ -11,15 +11,25 @@ interface NavItem {
     icon: React.ReactNode;
 }
 
-const navItems:NavItem[] =[
-    { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard/> },
-    { label: "Employees", path: "/employees", roles: ["admin", "manager"], icon: <Users /> },
-    { label: "Departments", path: "/departments", roles: ["admin"], icon:<Building2 /> },
-    { label: "Leave Requests", path: "/leave-requests", icon: <CalendarCheck />},
-    { label: "Projects", path: "/projects" ,icon:<KanbanSquare />},
-    { label: "Reports", path: "/reports", icon: <ChartBarDecreasing/> },
-    { label: "AI Assistant", path: "/ai-assistant",icon: <Bot /> },
-]
+const navItems: NavItem[] = [
+  { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard /> },
+  {
+    label: "Employees",
+    path: "/employees",
+    roles: ["admin", "manager"],
+    icon: <Users />,
+  },
+  {
+    label: "Departments",
+    path: "/departments",
+    roles: ["admin"],
+    icon: <Building2 />,
+  },
+  { label: "Leave Requests", path: "/leave-requests", icon: <CalendarCheck /> },
+  { label: "Projects", path: "/projects", icon: <KanbanSquare /> },
+  { label: "Reports", path: "/reports", icon: <ChartBarDecreasing /> },
+  { label: "AI Assistant", path: "/ai-assistant", icon: <Bot /> },
+];
 
 
 

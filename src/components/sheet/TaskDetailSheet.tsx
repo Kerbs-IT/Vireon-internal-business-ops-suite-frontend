@@ -190,7 +190,7 @@ export default function TaskDetailSheet({
                   </div>
                 </div>
 
-                {/* description */}
+                {/* description *Medium/}
                 <div className="rounded-lg bg-slate-50 p-3">
                   <p className="mb-1 text-xs font-medium text-slate-700">
                     Description

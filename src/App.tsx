@@ -16,6 +16,8 @@ import Department from "./pages/Department";
 import LeaveRequest from "./pages/LeaveRequest";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import Reports from "./pages/Reports";
+
 
 function App() {
   return (
@@ -85,7 +87,22 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+              <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id"
+            element={
+              <ProtectedRoute>
+                <ProjectDetail />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<NotFound />}></Route>
         </Route>
       </Routes>

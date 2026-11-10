@@ -1,3 +1,5 @@
+import type { Project } from "./project";
+
 export interface Employee {
   id: number;
   first_name: string;
@@ -22,6 +24,7 @@ export type TaskComment = {
 export interface Task {
   id: number;
   project_id: number;
+  project: Project;
   title: string;
   description: string;
   assigned_to: number;

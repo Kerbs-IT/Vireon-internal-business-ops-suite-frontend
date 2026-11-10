@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/helper/formatDate";
 import useProjects from "@/hooks/useProjects";
 import { format } from "date-fns";
 import { Calendar, Pencil, Plus, Search } from "lucide-react";
@@ -56,17 +57,13 @@ const AVATAR_COLORS = [
   "bg-sky-500",
 ];
 
-function formatDate (date: string){
-  return format(date, 'MMM dd, yyyy');
-}
+
 
 function Projects() {
   const [status, setStatus] = useState("all");
   const MAX = 3;
   // get the projects
   const { projects,loading:projectLoading,refetch } = useProjects();
-  const visible = members.slice(0, MAX);
-  const extra = members.length - MAX;
 
   return (
     <div className="page">
