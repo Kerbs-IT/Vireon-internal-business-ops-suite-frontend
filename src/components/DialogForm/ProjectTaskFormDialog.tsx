@@ -132,7 +132,7 @@ function ProjectTaskFormDialog({
     onOpenChange?.(next);
   }
 
-  async function onSubmit(values: TaskValues) {
+  async function onSubmit(values: taskValue) {
     setSubmitting(true);
     try {
       const payload = {
