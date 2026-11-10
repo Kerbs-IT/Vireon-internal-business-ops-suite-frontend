@@ -20,6 +20,6 @@ export default function useProjectTask(id:number) {
     },[refetch])
 
 
-    return { tasks, loading, error, refetch };
+    return { tasks, loading, error, refetch,setTasks };
 
 }

@@ -16,6 +16,7 @@ import { AuthContext } from "@/context/AuthContext";
 import axios from "axios";
 import { toast } from "@/components/ui/toast";
 import type { Task } from "@/types/task";
+import KanbanBoard from "@/components/KanbanBoard";
 
 type Member = {
   id: number;
@@ -168,7 +169,7 @@ function ProjectDetail() {
   const extra = projectDetail? projectDetail.members.length - MAX : members.length - MAX;
 
   // always read the task from the list, so a new comment shows up immediately
-  const { tasks,refetch } = useProjectTask(Number(id));
+  const { tasks,refetch,setTasks } = useProjectTask(Number(id));
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
   
 
@@ -203,6 +204,27 @@ async function addComment(taskId: number, text: string) {
     throw error;
   }
 }
+  
+  async function moveTask(taskId: number, newStatus: Task["status"]) {
+    const previous = tasks;
+
+    // 1. update the screen right away
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)),
+    );
+
+    // 2. save it, and undo if it fails
+    try {
+      await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
+    } catch (error) {
+      setTasks(previous);
+
+      let description = "Unable to move the task.";
+      if (axios.isAxiosError(error))
+        description = error.response?.data?.message || description;
+      toast.add({ type: "error", description });
+    }
+  }
 
   return (
     <div className="w-full">
@@ -291,7 +313,7 @@ async function addComment(taskId: number, text: string) {
       )}
 
       {/* board */}
-      <div className="mb-2 grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+      {/* <div className="mb-2 grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
         {COLUMNS.map((col) => {
           const columnTasks = tasks.filter((t) => t.status === col.key);
 
@@ -321,7 +343,8 @@ async function addComment(taskId: number, text: string) {
             </section>
           );
         })}
-      </div>
+      </div> */}
+      <KanbanBoard tasks={tasks} onOpen={openTask} onMove={moveTask} />
 
       <TaskDetailSheet
         task={selectedTask}
