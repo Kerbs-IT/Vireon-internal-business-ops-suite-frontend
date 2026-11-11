@@ -49,6 +49,7 @@ import NeedAttention from "@/components/reportsComponents/NeedAttention";
 import LeaveRecordItem from "@/components/reportsComponents/LeaveRecordItem";
 import SummaryMetricsTable from "@/components/reportsComponents/SummaryMetricsTable";
 import { dummyMetrics } from "@/data/dummyMetrics";
+import { useMetricCards } from "@/hooks/useReports";
 
 const projects: Project[] = [
   {
@@ -203,6 +204,7 @@ export const dummyTasks: Task[] = [
 function Reports() {
   const { departments } = useDepartments();
   const { employees } = useEmployees();
+  const { data:metricCardData, isLoading, isError, refetch } = useMetricCards();
   const departmentFilter = useMemo<Record<string, string>>(
     () => ({
       All: "All employees",
@@ -228,10 +230,26 @@ function Reports() {
         </div>
       </div>
       <div className="cards grid grid-cols-4 gap-2 mb-2">
-        <MetricCard label="Tasks completed" value={150} rating={8} />
-        <MetricCard label="Overdue tasks" value={6} rating={2} />
-        <MetricCard label="Leave awaiting approval" value={4} rating={8} />
-        <MetricCard label="Leave days taken" value={23} rating={4} />
+        <MetricCard
+          label="Tasks completed"
+          value={metricCardData?.taskCompleted ?? "-"}
+          rating={8}
+        />
+        <MetricCard
+          label="Overdue tasks"
+          value={metricCardData?.overdueTasks ?? "-"}
+          rating={2}
+        />
+        <MetricCard
+          label="Leave awaiting approval"
+          value={metricCardData?.pendingLeaveRequest ?? "-"}
+          rating={8}
+        />
+        <MetricCard
+          label="Leave days taken"
+          value={metricCardData?.leaveDaysTaken}
+          rating={4}
+        />
       </div>
       <div className="mb-2 grid grid-col2-1 xl:grid-cols-2 lg:grid-cols-2 gap-2 md:grid-cols-2">
         {/* task completion by project */}
@@ -281,10 +299,10 @@ function Reports() {
             ))}
           </ul>
         </div>
-          </div>
-          <div className="mb-2 w-full">
-              <SummaryMetricsTable metrics={dummyMetrics}/>
-          </div>
+      </div>
+      <div className="mb-2 w-full">
+        <SummaryMetricsTable metrics={dummyMetrics} />
+      </div>
     </div>
   );
 }
