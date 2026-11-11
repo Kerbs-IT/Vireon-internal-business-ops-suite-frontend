@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface MetricCardProps {
     label: string;
-    value: number;
+    value: number | string;
     rating: number;
     
 }
