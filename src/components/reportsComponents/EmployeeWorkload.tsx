@@ -1,25 +1,30 @@
-import React from 'react'
-import { Progress, ProgressLabel, ProgressValue } from '../ui/progress';
-import type { Employee } from '@/types/task';
+import { Progress, ProgressLabel, ProgressValue } from "../ui/progress";
+import type { EmployeeTaskOverview } from "@/types/employee";
 
-interface EmployeeWorloadProps{
-    employee: Employee;
-    value: number;
+interface EmployeeWorkloadProps {
+  employee: EmployeeTaskOverview;
 }
-function EmployeeWorkload({ employee, value }: EmployeeWorloadProps) {
-    const fullName = employee.first_name ? `${employee.first_name} ${employee.last_name?.charAt(0) ?? ''}` : 'none';
-    const done = 20;
-    const total = 40;
+
+function EmployeeWorkload({ employee }: EmployeeWorkloadProps) {
+  const fullName =
+    `${employee.first_name ?? ""} ${employee.last_name?.charAt(0) ?? ""}`.trim() ||
+    "Unknown";
+
+  const done = employee.completed_tasks_count;
+  const total = employee.total_tasks_count;
+  const overdue = employee.overdue_tasks_count;
+  const percentage = total > 0 ? Math.round((done / total) * 100) : 0;
+
   return (
-    <Progress key={employee.id} value={value ?? 20} className="mb-3 w-full ">
-      <ProgressLabel className={`capitalize flex gap-2 items-center`}>
-        <span className="text-black text-sm ">{fullName.trim()}</span>
-        <span className="text-xs text-slate-500 mb-0">
-          {employee.position ?? "none"}
+    <Progress value={percentage} className="mb-3 w-full">
+      <ProgressLabel className="capitalize flex gap-2 items-center">
+        <span className="text-black text-sm">{fullName}</span>
+        <span className="text-xs text-slate-500">
+          {employee.position ?? ""}
         </span>
       </ProgressLabel>
       <ProgressValue className="text-slate-600">
-        {() => `${done}/${total} · ${value} overdue`}
+        {() => `${done}/${total} · ${overdue} overdue`}
       </ProgressValue>
     </Progress>
   );

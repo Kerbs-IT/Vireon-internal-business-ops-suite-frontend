@@ -8,13 +8,8 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import type { LeaveByMonth } from "@/types/leave";
 
-interface MonthData {
-  month: string;
-  approved: number;
-  pending: number;
-  rejected: number;
-}
 
 const chartConfig = {
   approved: { label: "Approved", color: "#1E40AF" },
@@ -22,7 +17,7 @@ const chartConfig = {
   rejected: { label: "Rejected", color: "#D6D3CD" },
 } satisfies ChartConfig;
 
-export default function LeaveByMonthChart({ data }: { data: MonthData[] }) {
+export default function LeaveByMonthChart({ data }: { data: LeaveByMonth[] }) {
   return (
     <ChartContainer config={chartConfig} className="h-64 w-full">
       <BarChart data={data}>

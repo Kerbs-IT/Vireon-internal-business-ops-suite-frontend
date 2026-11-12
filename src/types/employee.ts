@@ -9,3 +9,9 @@ export interface Employee {
   date_hired: string;
   status: "active" | "inactive";
 }
+
+export interface EmployeeTaskOverview extends Employee {
+  total_tasks_count: number;
+  completed_tasks_count: number;
+  overdue_tasks_count: number;
+}

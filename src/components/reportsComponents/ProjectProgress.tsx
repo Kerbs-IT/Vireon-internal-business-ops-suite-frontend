@@ -1,20 +1,22 @@
 import React from 'react'
 import { Progress, ProgressLabel, ProgressValue } from '../ui/progress';
-import type { Project } from '@/types/project';
+import type { Project,ProjectCompletionReport } from '@/types/project';
 
-interface ProjectProgressProps{
-    project: Project;
-    value: number;
+interface ProjectCompletion{
+  project: ProjectCompletionReport;
 }
-function ProjectProgress({ project, value }: ProjectProgressProps) {
-    const done = 20;
-    const total = 40;
+function ProjectProgress({project}: ProjectCompletion) {
+  const done = project.completed_tasks_count;
+  const total = project.total_tasks;
+  const percentage = total > 0? Math.round((done / total) * 100) : 0;
   return (
-    <Progress key={project.id} value={value ?? 20} className="mb-3 w-full ">
+    <Progress  value={percentage ?? 0} className="mb-3 w-full ">
       <ProgressLabel className={`text-black text-sm capitalize`}>
         {project.name}
       </ProgressLabel>
-      <ProgressValue className='text-slate-600'>{() => `${done}/${total} · ${value}%`}</ProgressValue>
+      <ProgressValue className="text-slate-600">
+        {() => `${done}/${total} · ${percentage?? 0}%`}
+      </ProgressValue>
     </Progress>
   );
 }
