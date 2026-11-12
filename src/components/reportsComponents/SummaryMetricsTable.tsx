@@ -6,6 +6,7 @@ interface SummaryMetricsTableProps {
   valueHeader?: string;
   changeHeader?: string;
   className?: string;
+  loading?: boolean;
 }
 
 const toneStyles: Record<MetricTone, string> = {
@@ -38,6 +39,7 @@ export default function SummaryMetricsTable({
   valueHeader = "Value",
   changeHeader = "vs previous 30 days",
   className = "",
+  loading
 }: SummaryMetricsTableProps) {
   return (
     <section

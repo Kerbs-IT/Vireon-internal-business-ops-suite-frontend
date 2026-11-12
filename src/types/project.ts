@@ -12,5 +12,12 @@ export interface Project {
   status: "active" | "completed" | "on_hold";
   end_date: string;
   created_by: number;
-  members: ProjectMembers[];
+  members?: ProjectMembers[];
+}
+
+export interface ProjectCompletionReport {
+    id: number;
+    name: string;
+    total_tasks: number;
+    completed_tasks_count: number;
 }

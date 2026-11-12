@@ -37,3 +37,7 @@ export interface Task {
   assignee: Employee | null;
   comments: TaskComment[];
 }
+
+export interface TasksNeedAttention extends Task  {
+  project: Project;
+}

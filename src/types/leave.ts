@@ -50,3 +50,10 @@ export interface TeamLeaveRequestType {
   user: LeaveUser;
   leave_type: LeaveType;
 }
+
+export type LeaveByMonth = {
+  month: string;
+  approved: number;
+  pending: number;
+  rejected: number;
+};
