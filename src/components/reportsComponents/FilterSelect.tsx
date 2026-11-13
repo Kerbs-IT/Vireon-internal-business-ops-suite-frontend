@@ -1,32 +1,35 @@
-import { useState } from "react";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
-type List = Record<string | number, string >;
+type List = Record<string | number, string>;
 
 interface FilterSelectProps {
   list: List;
-  defaultValue: string | number;
+  value: string;
+  onChange: (value: string) => void;
+  ariaLabel?: string;
 }
 
-function FilterSelect({ list, defaultValue }: FilterSelectProps) {
-    const [value, setValue] = useState(defaultValue?? "");
+function FilterSelect({ list, value, onChange, ariaLabel }: FilterSelectProps) {
   return (
     <Select
       value={value}
-      onValueChange={(val) => setValue(val)}
+      onValueChange={(val) => val && onChange(val)}
       items={list}
     >
-      <SelectTrigger
-        id="checkout-exp-month-ts6"
-        className="p-4.5 bg-white min-w-30"
-        
-      >
+      <SelectTrigger aria-label={ariaLabel} className="p-4.5 bg-white min-w-30">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          {Object.entries(list).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
+          {Object.entries(list).map(([key, label]) => (
+            <SelectItem key={key} value={key}>
               {label}
             </SelectItem>
           ))}

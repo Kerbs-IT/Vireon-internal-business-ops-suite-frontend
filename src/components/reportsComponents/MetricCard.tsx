@@ -16,7 +16,7 @@ function MetricCard({label,value,rating}:MetricCardProps) {
     return (
       <div className="rounded-md p-3 bg-white border border-slate-200">
         <p className="text-slate-600 text-sm mb-1">{label ?? "label"}</p>
-        <h1 className="text-5xl font-bold mb-1">{value ?? "0"}</h1>
+        <h1 className="text-5xl font-bold mb-1">{ Math.round(Number(value)) ?? "0"}</h1>
         <p
           className={`mb-0 flex gap-1 items-center justify--start text-xs ${ratingColor}`}
         >
