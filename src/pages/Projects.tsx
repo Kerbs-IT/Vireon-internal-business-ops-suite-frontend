@@ -15,11 +15,17 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/helper/formatDate";
+import { useDebounce } from "@/hooks/useDebounce";
 import useProjects from "@/hooks/useProjects";
 import { format } from "date-fns";
 import { Calendar, Pencil, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+
+interface ProjectFilter{
+  search?: string;
+  status: string;
+}
 
 const statusItems = {
   all: "All Status",
@@ -60,10 +66,30 @@ const AVATAR_COLORS = [
 
 
 function Projects() {
-  const [status, setStatus] = useState("all");
+  
+  const [filters, setFilters] = useState<ProjectFilter>({
+    status:'all'
+  });
+
+  // order the value of the filters
+  const setFilter = (key: keyof ProjectFilter) => (value:string) => (
+    setFilters((prev) => ({...prev, [key]: value}))
+  );
+
+  const debouncedSearch = useDebounce(filters.search, 400);
+
+  
   const MAX = 3;
   // get the projects
-  const { projects,loading:projectLoading,refetch } = useProjects();
+ const {
+   projects,
+   loading: projectLoading,
+   error,
+   refetch,
+ } = useProjects({
+   status: filters.status,
+   search: debouncedSearch,
+ });
 
   return (
     <div className="page">
@@ -75,13 +101,15 @@ function Projects() {
               type="text"
               id="search-bar"
               placeholder="Search by name or email.."
+              value={filters.search}
+              onChange={(e) => setFilter('search')(e.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300 "
             />
           </div>
           <div className="departments-dropdown">
             <Select
-              value={status}
-              onValueChange={(val) => setStatus(val)}
+              value={filters['status']}
+              onValueChange={(val) => { setFilter('status')(val); console.log(filters);}}
               items={statusItems}
             >
               <SelectTrigger
@@ -152,7 +180,16 @@ function Projects() {
                 </div>
               </div>
             ))
-          : projects.map((project) => {
+          : projects.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center bg-white">
+              <p className="text-sm font-medium text-slate-600">No projects found</p>
+              <p className="mt-1 text-xs text-slate-400">
+                {filters.search || filters.status !== "all"
+                  ? "Try changing your search or filters."
+                  : "Projects you create will appear here."}
+              </p>
+            </div>
+          ) :  projects.map((project) => {
               const visible = project.members.slice(0, MAX);
               const extra = project.members.length - MAX;
 
