@@ -27,29 +27,13 @@ import {
   type ReportFilters,
 } from "@/hooks/useReports";
 import { Skeleton } from "@/components/ui/skeleton";
+import { exportReportXlsx} from "@/lib/exportReportCsv";
 
 const daysFilter = {
   "7d": "Last 7 days",
   "30d": "Last 30 days",
   this_month: "This year",
 };
-
-
-const departmentFilter = {
-  All: "All employees",
-};
-
-const leaveByMonth = [
-  { month: "Jun", approved: 8, pending: 2, rejected: 1 },
-  { month: "Jul", approved: 6, pending: 1, rejected: 0 },
-  { month: "Aug", approved: 10, pending: 3, rejected: 1 },
-  { month: "Sep", approved: 7, pending: 2, rejected: 1 },
-  { month: "Oct", approved: 9, pending: 3, rejected: 0 },
-  { month: "Nov", approved: 5, pending: 2, rejected: 1 },
-];
-
-
-
 
 
 function Reports() {
@@ -77,11 +61,13 @@ function Reports() {
     isLoading: taskByStatusLoading,
     isError: taskByStatusError,
   } = useTaskByStatus(filters);
+
   const {
     data: employeeTaskOverview = [],
     isLoading: employeeTaskOverviewLoading,
     isError: employeeTaskOverviewError,
   } = useEmployeeTaskOverview(filters);
+
   const departmentFilter = useMemo<Record<string, string>>(
     () => ({
       All: "All employees",
@@ -120,6 +106,45 @@ function Reports() {
   const days = "30d";
   const { data: summaryMetrics = [], isLoading: summaryMetricsLoading } =
     useSummaryMetrics(filters);
+  
+  
+  // report 
+  const periodRange = useMemo(() => {
+    const n = parseInt(filters.days, 10);
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - (n - 1));
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    return `${fmt(from)} to ${fmt(to)}`;
+  }, [filters.days]);
+
+  const isLoadingAny =
+    isLoading ||
+    taskByStatusLoading ||
+    employeeTaskOverviewLoading ||
+    projectCompletionLoading ||
+    leaveThisWeekLoading ||
+    leaveByMonthLoading ||
+    needAttentionLoading ||
+    summaryMetricsLoading;
+
+  const handleExport = () =>
+    exportReportXlsx({
+      filterLabels: {
+        period: daysFilter[filters.days as keyof typeof daysFilter],
+        project: projectFilter[filters.project],
+        department: departmentFilter[filters.department],
+      },
+      periodRange,
+      metricCards: metricCardData,
+      summaryMetrics,
+      statusCounts,
+      projects: projectsList,
+      employees: employeeTaskOverview,
+      leaveByMonth,
+      needAttention,
+      leaveThisWeek,
+    });
   return (
     <div className="page">
       <div className="header flex justify-between items-center mb-3">
@@ -148,7 +173,13 @@ function Reports() {
             onChange={setFilter("department")}
             ariaLabel="Department"
           />
-          <Button className="p-4.5">Export CSV</Button>
+          <Button
+            className="p-4.5"
+            onClick={handleExport}
+            disabled={isLoadingAny}
+          >
+            Export Excel
+          </Button>
         </div>
       </div>
 

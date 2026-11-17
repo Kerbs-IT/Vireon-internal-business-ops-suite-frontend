@@ -27,7 +27,12 @@ const navItems: NavItem[] = [
   },
   { label: "Leave Requests", path: "/leave-requests", icon: <CalendarCheck /> },
   { label: "Projects", path: "/projects", icon: <KanbanSquare /> },
-  { label: "Reports", path: "/reports", icon: <ChartBarDecreasing /> },
+  {
+    label: "Reports",
+    path: "/reports",
+    icon: <ChartBarDecreasing />,
+    roles: ["admin","manager"],
+  },
   { label: "AI Assistant", path: "/ai-assistant", icon: <Bot /> },
 ];
 
