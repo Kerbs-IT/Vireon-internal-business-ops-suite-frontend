@@ -18,10 +18,15 @@ import { Button } from "../ui/button";
 import useManagers from "@/hooks/useManagers";
 import DropDownCombobox from "../DropDownCombobox";
 import api from "@/lib/api";
+import { Trash2 } from "lucide-react";
+import ArchiveAlertDialog from "../alertDialog/archiveAlertDialog";
+import type {  Employee, ManagerOption } from "@/types/employee";
+import { toast } from "../ui/toast";
 
 interface Department {
   id: number;
   name: string;
+  manager_id: number;
   manager: { id: number; first_name: string; last_name: string } | null;
 }
 
@@ -29,6 +34,7 @@ interface DepartmentFormDialogProps {
   department?: Department;
   trigger: React.ReactElement;
   onSuccess: () => void; // tells the parent page to refetch the list
+  managers?: ManagerOption[];
 }
 
 const departmentSchema = z.object({
@@ -47,11 +53,13 @@ export default function DepartmentFormDialog({
   department,
   trigger,
   onSuccess,
+  managers
 }: DepartmentFormDialogProps) {
   const isEditMode = !!department;
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { managers } = useManagers();
+
+   const [deactivateOpen, setDeactivateOpen] = useState(false);
 
   const {
     control,
@@ -79,11 +87,18 @@ export default function DepartmentFormDialog({
   async function onSubmit(values: DepartmentFormValues) {
     setSubmitError(null);
     try {
-      if (isEditMode) {
-        await api.put(`/departments/${department.id}`, values);
-      } else {
-        await api.post("/departments", values);
-      }
+
+      const res = isEditMode
+        ? await api.put(`/departments/${department.id}`, values)
+        : await api.post("/departments", values);
+      
+      toast.add({
+        type: "success",
+        description:
+          res.data.message ??
+          (isEditMode ? "Department updated." : "Department created."),
+      });
+
       onSuccess(); // tell Department.tsx to refetch
       setOpen(false); // close the dialog
       reset(); // clear the form for next time it opens
@@ -95,81 +110,111 @@ export default function DepartmentFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={trigger} />
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Edit Department" : "Add Department"}
-          </DialogTitle>
-        </DialogHeader>
-        <DialogDescription>
-          {isEditMode
-            ? "Edit an organizational unit"
-            : "Create an organizational unit"}
-        </DialogDescription>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger render={trigger} />
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "Edit Department" : "Add Department"}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            {isEditMode
+              ? "Edit an organizational unit"
+              : "Create an organizational unit"}
+          </DialogDescription>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Field>
-            <FieldLabel htmlFor="department-name">Department Name</FieldLabel>
-            <Controller
-              name="name"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  id="department-name"
-                  className="p-3 rounded border border-slate-300 w-full"
-                  placeholder="e.g. Human Resource"
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Field>
+              <FieldLabel htmlFor="department-name">Department Name</FieldLabel>
+              <Controller
+                name="name"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    id="department-name"
+                    className="p-3 rounded border border-slate-300 w-full"
+                    placeholder="e.g. Human Resource"
+                  />
+                )}
+              />
+              <FieldError message={errors.name?.message} />
+            </Field>
+
+            <Field className="mt-4">
+              <FieldLabel>Manager</FieldLabel>
+              <Controller
+                name="manager_id"
+                control={control}
+                render={({ field }) => (
+                  <DropDownCombobox
+                    list={managers}
+                    value={field.value ?? undefined}
+                    onChange={field.onChange}
+                    placeHolder="Select a manager"
+                  />
+                )}
+              />
+              <FieldError message={errors.manager_id?.message} />
+            </Field>
+
+            {submitError && (
+              <p className="text-sm text-destructive mt-3">{submitError}</p>
+            )}
+
+            <DialogFooter className="mt-4 flex flex-row items-center sm:justify-between">
+              <div className="left">
+                {department && (
+                  <button
+                    type="button"
+                    onClick={() => setDeactivateOpen(true)}
+                    className="text-red-500 flex items-center justify-center gap-1 text-xs transition duration-300 ease-in-out hover:cursor-pointer hover:bg-red-50 p-1.5 rounded"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="leading-none pb-0">Deactivate</span>
+                  </button>
+                )}
+              </div>
+              <div className="right flex gap-1">
+                <DialogClose
+                  render={
+                    <Button variant="outline" className="hover:cursor-pointer">
+                      Cancel
+                    </Button>
+                  }
                 />
-              )}
-            />
-            <FieldError message={errors.name?.message} />
-          </Field>
-
-          <Field className="mt-4">
-            <FieldLabel>Manager</FieldLabel>
-            <Controller
-              name="manager_id"
-              control={control}
-              render={({ field }) => (
-                <DropDownCombobox
-                  list={managers}
-                  value={field.value ?? undefined}
-                  onChange={field.onChange}
-                  placeHolder="Select a manager"
-                />
-              )}
-            />
-            <FieldError message={errors.manager_id?.message} />
-          </Field>
-
-          {submitError && (
-            <p className="text-sm text-destructive mt-3">{submitError}</p>
-          )}
-
-          <DialogFooter className="mt-4">
-            <DialogClose
-              render={
-                <Button variant="outline" className="hover:cursor-pointer">
-                  Cancel
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-linear-to-r hover:cursor-pointer from-orange-600 border-0 outline-0 to-orange-400 p-2"
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : isEditMode
+                      ? "Save Changes"
+                      : "Add Department"}
                 </Button>
-              }
-            />
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-linear-to-r hover:cursor-pointer from-orange-600 border-0 outline-0 to-orange-400 p-2"
-            >
-              {isSubmitting
-                ? "Saving..."
-                : isEditMode
-                  ? "Save Changes"
-                  : "Add Department"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {department && (
+        <ArchiveAlertDialog
+          open={deactivateOpen}
+          onOpenChange={setDeactivateOpen}
+          item={department}
+          onDeactivated={() => {
+            setDeactivateOpen(false); // close the alert dialog
+            setOpen(false); // close the employee dialog
+            onSuccess?.();
+          }}
+          category="departments"
+          categoryLabel="department"
+        />
+      )}
+    </>
   );
 }

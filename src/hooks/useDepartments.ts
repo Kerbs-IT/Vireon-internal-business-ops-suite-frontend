@@ -11,25 +11,33 @@ interface Manager {
 interface Department {
   id: number;
   name: string;
+  manager_id: number;
   manager: Manager | null;
   employee_count?: number;
 }
+interface DepartmentFilter{
+  archived: boolean;
+}
 
-export default function useDepartments() {
+const DEFAULT_FILTERS: DepartmentFilter = {archived: false };
+
+export default function useDepartments(filters:DepartmentFilter = DEFAULT_FILTERS) {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDepartments = useCallback(() => {
+  const archived = filters.archived ? 1 : undefined; 
+
+  const fetchDepartments = useCallback(async () => {
     setLoading(true);
     return api
-      .get("/departments")
+      .get("/departments",{params:{archived}})
       .then((res) => setDepartments(res.data.departments))
       .catch((err) =>
         setError(err.response?.data?.message ?? "Failed to load departments")
       )
       .finally(() => setLoading(false));
-  }, []);
+  }, [archived]);
 
   useEffect(() => {
     fetchDepartments();

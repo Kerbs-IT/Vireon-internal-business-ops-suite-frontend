@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Field, FieldLabel } from "../ui/field";
 import { Controller, useForm } from "react-hook-form";
 import { Textarea } from "../ui/textarea";
@@ -34,6 +34,7 @@ import { toast } from "@/components/ui/toast";
 import useEmployees from "@/hooks/useEmployees";
 import { DeactivateProjectDialog } from "./DeactivateProjectDialog";
 import type { Project } from "@/types/project";
+import { AuthContext } from "@/context/AuthContext";
 
 
 
@@ -101,6 +102,11 @@ function ProjectFormDialog({
   const [submitting, setSubmitting] = useState(false);
   const { employees } = useEmployees();
   const [deactivateOpen, setDeactivateOpen] = useState(false);
+  // get The current user
+  const { user } = useContext(AuthContext);
+
+  // filter the employees endpoint to remove the user from the list
+  const selected = employees.filter((e) => e.id !== user?.id)
 
   const {
     control,
@@ -277,7 +283,7 @@ function ProjectFormDialog({
 
                   return (
                     <div className="flex flex-col w-full border rounded-md p-3 gap-2 overflow-y-auto max-h-50">
-                      {employees.map((member) => {
+                      {selected.map((member) => {
                         const selected = field.value.includes(member.id);
 
                         return (

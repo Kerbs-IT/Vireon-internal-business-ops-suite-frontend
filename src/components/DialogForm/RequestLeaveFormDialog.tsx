@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import {
   Dialog,
@@ -34,9 +34,18 @@ interface LeaveType {
   name: string;
 }
 
+interface EditableLeaveRequest {
+  id: number;
+  leave_type: { id: number; name: string } | null;
+  start_date: string;
+  end_date: string;
+  reason: string;
+}
+
 interface RequestLeaveFormDialogProps {
   trigger: ReactElement;
   onSuccess?: () => void;
+  leaveRequest?: EditableLeaveRequest;
 }
 
 const leaveSchema = z
@@ -113,11 +122,13 @@ export function DatePicker({
 export default function RequestLeaveFormDialog({
   trigger,
   onSuccess,
+  leaveRequest,
 }: RequestLeaveFormDialogProps) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
+  const isEdit = !!leaveRequest;
 
   const {
     control,
@@ -167,46 +178,75 @@ export default function RequestLeaveFormDialog({
     };
   }, [open, reset]);
 
-  async function onSubmit(values: LeaveFormValues) {
-    setSubmitting(true);
-    try {
-      const res = await api.post("/leaveRequests", {
-        leave_type_id: values.leave_type_id,
-        // yyyy-MM-dd in local time, avoids the UTC off-by-one-day problem
-        start_date: format(values.start_date, "yyyy-MM-dd"),
-        end_date: format(values.end_date, "yyyy-MM-dd"),
-        reason: values.reason,
-      });
+  useEffect(() => {
+    if (!open || !leaveRequest) return;
+    reset({
+      leave_type_id: leaveRequest.leave_type?.id,
+      start_date: parseISO(leaveRequest.start_date.slice(0, 10)),
+      end_date: parseISO(leaveRequest.end_date.slice(0, 10)),
+      reason: leaveRequest.reason ?? "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, leaveRequest?.id, reset]);
 
-      toast.add({
-        type: "success",
-        description: res.data.message ?? "Leave request submitted.",
-      });
-      setOpen(false);
-      onSuccess?.();
-    } catch (error) {
-      let description = "Something went wrong.";
-      if (axios.isAxiosError(error)) {
-        const data = error.response?.data;
-        // Laravel 422: first validation error, otherwise the message
-        description =
-          (data?.errors && Object.values<string[]>(data.errors)[0]?.[0]) ||
-          data?.message ||
-          description;
-      }
-      toast.add({ type: "error", description });
-    } finally {
-      setSubmitting(false);
-    }
-  }
+ async function onSubmit(values: LeaveFormValues) {
+   setSubmitting(true);
+   try {
+     const payload = {
+       leave_type_id: values.leave_type_id,
+       start_date: format(values.start_date, "yyyy-MM-dd"),
+       end_date: format(values.end_date, "yyyy-MM-dd"),
+       reason: values.reason,
+     };
+
+     const res = isEdit
+       ? await api.put(`/leave-requests/${leaveRequest!.id}`, payload)
+       : await api.post("/leaveRequests", payload);
+
+     toast.add({
+       type: "success",
+       description:
+         res.data.message ??
+         (isEdit ? "Leave request updated." : "Leave request submitted."),
+     });
+     setOpen(false);
+     onSuccess?.();
+   } catch (error) {
+     let description = "Something went wrong.";
+     if (axios.isAxiosError(error)) {
+       const data = error.response?.data;
+       description =
+         (data?.errors && Object.values<string[]>(data.errors)[0]?.[0]) ||
+         data?.message ||
+         description;
+
+       // 409 = already reviewed while the form was open: close and refresh the list
+       if (error.response?.status === 409) {
+         toast.add({ type: "error", description });
+         setOpen(false);
+         onSuccess?.();
+         return;
+       }
+     }
+     toast.add({ type: "error", description });
+   } finally {
+     setSubmitting(false);
+   }
+ }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={trigger} />
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Request Leave</DialogTitle>
-          <DialogDescription>Submit a new time-off request</DialogDescription>
+          <DialogTitle>
+            {isEdit ? "Edit Leave Request" : "Request Leave"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Update your pending request"
+              : "Submit a new time-off request"}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -293,8 +333,8 @@ export default function RequestLeaveFormDialog({
               control={control}
               render={({ field }) => (
                 <Textarea
-                className="field-sizing-fixed w-full m-h-20 wrap-break-word"
-                  {...field}  
+                  className="field-sizing-fixed w-full m-h-20 wrap-break-word"
+                  {...field}
                   placeholder="Briefly describe your reason for leave..."
                 />
               )}

@@ -18,7 +18,8 @@ import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { toast } from "@/components/ui/toast";
 import api from "@/lib/api";
-import { countDays } from "@/pages/LeaveRequestComponent/MyRequests";
+import { countDays, formatRange } from "@/lib/leave";
+
 
 interface LeaveRequest {
   id: number;
@@ -52,17 +53,7 @@ function ErrorText({ message }: { message?: string }) {
   return <p className="text-sm font-medium text-destructive mt-1">{message}</p>;
 }
 
-// "Mar 25 - 28, 2026" / "Mar 25 - Apr 2, 2026" / "Mar 25, 2026"
-function formatRange(start: string, end: string) {
-  const s = parseISO(start.slice(0, 10));
-  const e = parseISO(end.slice(0, 10));
 
-  if (start.slice(0, 10) === end.slice(0, 10)) return format(s, "MMM d, yyyy");
-  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
-    return `${format(s, "MMM d")} - ${format(e, "d, yyyy")}`;
-  }
-  return `${format(s, "MMM d")} - ${format(e, "MMM d, yyyy")}`;
-}
 
 export default function ReviewLeaveRequestDialog({
   leaveRequest,

@@ -8,14 +8,10 @@ import {
 } from "@/components/ui/combobox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { ProjectMembers } from "@/types/project";
+import type { ManagerOption } from "@/types/employee";
 
 
-interface UserOption {
-  id: number;
-  first_name: string;
-  last_name: string;
-  position: string;
-}
+
 
 
 
@@ -25,7 +21,7 @@ export default function DropDownCombobox({
   onChange,
   placeHolder
 }: {
-  list: UserOption[];
+  list: ManagerOption[];
   value?: number;
     onChange: (id: number | null) => void;
     placeHolder: string;
@@ -36,8 +32,8 @@ export default function DropDownCombobox({
     <Combobox
       items={list}
       value={selected}
-      onValueChange={(item: UserOption | null) => onChange(item?.id ?? null)}
-      itemToStringLabel={(item: UserOption) =>
+      onValueChange={(item: ManagerOption | null) => onChange(item?.id ?? null)}
+      itemToStringLabel={(item: ManagerOption) =>
         item ? `${item.first_name} ${item.last_name}` : ""
       }
     >
@@ -45,7 +41,7 @@ export default function DropDownCombobox({
       <ComboboxContent >
         <ComboboxEmpty>No record found.</ComboboxEmpty>
         <ComboboxList>
-          {(item: UserOption) => {
+          {(item: ManagerOption) => {
             const fullName = `${item.first_name} ${item.last_name}`;
             const initials =
               `${item.first_name[0]}${item.last_name[0]}`.toUpperCase();
