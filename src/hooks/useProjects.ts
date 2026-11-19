@@ -21,9 +21,10 @@ export interface Project {
 export interface ProjectFilter {
   status: string;
   search: string;
+  archived: boolean;            // NEW
 }
 
-const DEFAULT_FILTERS: ProjectFilter = { status: "all", search: "" };
+const DEFAULT_FILTERS: ProjectFilter = { status: "all", search: "" ,archived: false };
 
 export default function useProjects(filters: ProjectFilter = DEFAULT_FILTERS) {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,6 +34,7 @@ export default function useProjects(filters: ProjectFilter = DEFAULT_FILTERS) {
   // "all" and empty search are omitted, so axios doesn't send them
   const status = filters.status === "all" ? undefined : filters.status;
   const search = filters.search?.trim() || undefined;
+  const archived = filters.archived ? 1 : undefined; 
 
   // only the latest request may update state (avoids out-of-order responses)
   const requestId = useRef(0);
@@ -44,7 +46,7 @@ export default function useProjects(filters: ProjectFilter = DEFAULT_FILTERS) {
 
     try {
       const res = await api.get<Project[]>("/projects", {
-        params: { status, search },
+        params: { status, search,archived },
       });
       if (id === requestId.current) setProjects(res.data);
     } catch (err: any) {
@@ -54,7 +56,7 @@ export default function useProjects(filters: ProjectFilter = DEFAULT_FILTERS) {
     } finally {
       if (id === requestId.current) setLoading(false);
     }
-  }, [status, search]);
+  }, [status, search, archived]);
 
   useEffect(() => {
     refetch();

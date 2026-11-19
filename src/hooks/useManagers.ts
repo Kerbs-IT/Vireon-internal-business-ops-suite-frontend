@@ -1,12 +1,8 @@
 import api from "@/lib/api";
+import type { ManagerOption } from "@/types/employee";
 import { useEffect, useState } from "react";
 
-interface ManagerOption {
-  id: number;
-  first_name: string;
-  last_name: string;
-  position: string;
-}
+
 
 export default function useManagers() {
   const [managers, setManagers] = useState<ManagerOption[]>([]);

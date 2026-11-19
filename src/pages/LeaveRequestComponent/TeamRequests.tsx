@@ -2,8 +2,8 @@
 import ReviewLeaveRequestDialog from "@/components/DialogForm/ReviewLeaveRequestDIalog";
 import { Button } from "@/components/ui/button";
 import { useTeamLeaveRequest } from "@/hooks/useTeamLeaveRequest";
-import { countDays, formatDate } from "./MyRequests";
 import { Skeleton } from "@/components/ui/skeleton";
+import { countDays, formatDate } from "@/lib/leave";
 
 function ReviewRequestSkeleton() {
   return (

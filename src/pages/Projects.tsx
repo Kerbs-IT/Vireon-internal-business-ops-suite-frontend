@@ -1,3 +1,4 @@
+import ArchiveToggle, { ConfirmRestoreDialog } from "@/components/ArchiveToggle";
 import ProjectFormDialog from "@/components/DialogForm/ProjectFormDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,23 +15,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import { formatDate } from "@/helper/formatDate";
 import { useDebounce } from "@/hooks/useDebounce";
 import useProjects from "@/hooks/useProjects";
+import api from "@/lib/api";
+import type { Project } from "@/types/project";
 import { format } from "date-fns";
 import { Calendar, Pencil, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-interface ProjectFilter{
+interface ProjectFilter {
   search?: string;
   status: string;
+  archived: boolean;
 }
 
 const statusItems = {
   all: "All Status",
   active: "Active",
-  "on_hold": "On-hold",
+  on_hold: "On-hold",
   completed: "Completed",
 };
 
@@ -39,7 +44,6 @@ const statusColorPlatte = {
   "on-hold": "bg-slate-100 text-slate-500",
   completed: "bg-green-100 text-green-500",
 };
-
 
 type Member = {
   id: number;
@@ -63,33 +67,65 @@ const AVATAR_COLORS = [
   "bg-sky-500",
 ];
 
-
-
 function Projects() {
-  
   const [filters, setFilters] = useState<ProjectFilter>({
-    status:'all'
+    status: "all",
+    archived: false,
   });
 
   // order the value of the filters
-  const setFilter = (key: keyof ProjectFilter) => (value:string) => (
-    setFilters((prev) => ({...prev, [key]: value}))
-  );
+  const setFilter = (key: keyof ProjectFilter) => (value: string) =>
+    setFilters((prev) => ({ ...prev, [key]: value }));
 
   const debouncedSearch = useDebounce(filters.search, 400);
 
-  
   const MAX = 3;
   // get the projects
- const {
-   projects,
-   loading: projectLoading,
-   error,
-   refetch,
- } = useProjects({
-   status: filters.status,
-   search: debouncedSearch,
- });
+  const {
+    projects,
+    loading: projectLoading,
+    error,
+    refetch,
+  } = useProjects({
+    status: filters.status,
+    search: debouncedSearch,
+    archived: filters.archived,
+  });
+
+
+  const [restoreTarget, setRestoreTarget] = useState<Project | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+
+
+  const openRestore = (project: Project) => {
+    setRestoreError(null);
+    setRestoreTarget(project);
+  };
+
+  const handleRestore = async () => {
+    if (!restoreTarget) return;
+
+    setRestoring(true);
+    setRestoreError(null);
+    try {
+      await api.patch(`/projects/${restoreTarget.id}/restore`);
+
+         toast.add({
+              type: "success",
+              description: `${restoreTarget.name} restored successfully`
+                
+            });
+      setRestoreTarget(null); // close the dialog
+      refetch(); // the restored project leaves the Archived list
+    } catch (err: any) {
+      setRestoreError(
+        err.response?.data?.message ?? "Unable to restore the project.",
+      );
+    } finally {
+      setRestoring(false);
+    }
+  };
 
   return (
     <div className="page">
@@ -102,14 +138,14 @@ function Projects() {
               id="search-bar"
               placeholder="Search by name or email.."
               value={filters.search}
-              onChange={(e) => setFilter('search')(e.target.value)}
+              onChange={(e) => setFilter("search")(e.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300 "
             />
           </div>
           <div className="departments-dropdown">
             <Select
-              value={filters['status']}
-              onValueChange={(val) => { setFilter('status')(val); console.log(filters);}}
+              value={filters["status"]}
+              onValueChange={(val) => setFilter("status")(val)}
               items={statusItems}
             >
               <SelectTrigger
@@ -130,10 +166,13 @@ function Projects() {
               </SelectContent>
             </Select>
           </div>
+          <ArchiveToggle
+            value={filters.archived}
+            onChange={(v) => setFilters((prev) => ({ ...prev, archived: v }))}
+          />
         </div>
         <div className="right">
           <ProjectFormDialog
-            
             triggerIsButton={false}
             onSuccess={refetch}
             trigger={
@@ -146,120 +185,151 @@ function Projects() {
         </div>
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3 lg:grid-cols-2 md:grid-cols-2">
-        {projectLoading
-          ? Array.from({ length: 3 }).map((_, key) => (
+        {projectLoading ? (
+          Array.from({ length: 3 }).map((_, key) => (
+            <div
+              key={key}
+              className="projet-con group hover:cursor-pointer hover:shadow-lg p-4  transition duration-300 ease-in-out bg-white  rounded-md"
+            >
+              <div className="mb-2 flex justify-between items-center">
+                <Skeleton className="h-6 w-15" />
+
+                <Skeleton className="h-5 w-5" />
+              </div>
+              <Skeleton className="h-4 w-60 mb-2" />
+
+              <Skeleton className="h-4 w-70 mb-2" />
+              <Skeleton className="h-4 w-60 mb-2" />
+
+              {/* progres bar */}
+              <div className="mb-2 flex justify-between">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-7" />
+              </div>
+              <Skeleton className="h-3 w-full mb-2" />
+              <div className="bottom-part flex justify-between items-center">
+                <div className="flex items-center ">
+                  <Skeleton className="h-5 w-20" />
+                </div>
+                <div className="date flex gap-1 items-center justify-center">
+                  <Skeleton className="h-5 w-20" />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : projects.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center bg-white">
+            <p className="text-sm font-medium text-slate-600">
+              No projects found
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              {filters.search || filters.status !== "all"
+                ? "Try changing your search or filters."
+                : "Projects you create will appear here."}
+            </p>
+          </div>
+        ) : (
+          projects.map((project) => {
+            const visible = project.members.slice(0, MAX);
+            const extra = project.members.length - MAX;
+
+            return (
               <div
-                key={key}
+                key={project.id}
                 className="projet-con group hover:cursor-pointer hover:shadow-lg p-4  transition duration-300 ease-in-out bg-white  rounded-md"
               >
                 <div className="mb-2 flex justify-between items-center">
-                  <Skeleton className="h-6 w-15" />
-
-                  <Skeleton className="h-5 w-5" />
-                </div>
-                <Skeleton className="h-4 w-60 mb-2" />
-
-                <Skeleton className="h-4 w-70 mb-2" />
-                <Skeleton className="h-4 w-60 mb-2" />
-
-                {/* progres bar */}
-                <div className="mb-2 flex justify-between">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-3 w-7" />
-                </div>
-                <Skeleton className="h-3 w-full mb-2" />
-                <div className="bottom-part flex justify-between items-center">
-                  <div className="flex items-center ">
-                    <Skeleton className="h-5 w-20" />
-                  </div>
-                  <div className="date flex gap-1 items-center justify-center">
-                   
-
-                    <Skeleton className="h-5 w-20" />
-                  </div>
-                </div>
-              </div>
-            ))
-          : projects.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center bg-white">
-              <p className="text-sm font-medium text-slate-600">No projects found</p>
-              <p className="mt-1 text-xs text-slate-400">
-                {filters.search || filters.status !== "all"
-                  ? "Try changing your search or filters."
-                  : "Projects you create will appear here."}
-              </p>
-            </div>
-          ) :  projects.map((project) => {
-              const visible = project.members.slice(0, MAX);
-              const extra = project.members.length - MAX;
-
-              return (
-                <div
-                  key={project.id}
-                  className="projet-con group hover:cursor-pointer hover:shadow-lg p-4  transition duration-300 ease-in-out bg-white  rounded-md"
-                >
-                  <div className="mb-2 flex justify-between items-center">
-                    <span
-                      className={`inline-block py-1.5 px-2 text-xs rounded-full  ${statusColorPlatte[project.status]} capitalize`}
+                  <span
+                    className={`inline-block py-1.5 px-2 text-xs rounded-full  ${statusColorPlatte[project.status]} capitalize`}
+                  >
+                    {project.status}
+                  </span>
+                  {filters.archived ? (
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-orange-600 hover:underline"
+                      onClick={() => openRestore(project)}
                     >
-                      {project.status}
-                    </span>
+                      Restore
+                    </button>
+                  ) : (
                     <ProjectFormDialog
                       project={project}
                       onSuccess={refetch}
                       trigger={
-                        <button type="button" aria-label="Edit project" className="hover:cursor-pointer">
+                        <button
+                          type="button"
+                          aria-label="Edit project"
+                          className="hover:cursor-pointer"
+                        >
                           <Pencil className="h-4 w-4 text-slate-500 opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-100" />
                         </button>
                       }
                     />
-                  </div>
+                  )}
+                </div>
 
+                {filters.archived ? (
+                  <h1 className="font-bold text-lg">{project.name}</h1>
+                ) : (
                   <Link
                     to={`/projects/${project.id}`}
                     className=" hover:text-blue-500"
                   >
                     <h1 className="font-bold text-lg">{project.name}</h1>
                   </Link>
-                  <p className="capitalize mb-2 text-wrap w-full line-clamp-2">
-                    {project.description ?? "none"}
-                  </p>
-                  {/* progres bar */}
-                  <Progress value={56} className="mb-3 w-full max-w-sm ">
-                    <ProgressLabel className={`text-slate-400 text-sm`}>
-                      Progress
-                    </ProgressLabel>
-                    <ProgressValue />
-                  </Progress>
-                  <div className="bottom-part flex justify-between items-center">
-                    <div className="flex items-center -space-x-1">
-                      {visible.map((m, i) => (
-                        <div
-                          key={m.id}
-                          title={`${m.first_name} ${m.last_name}`}
-                          className={`flex size-6 items-center justify-center rounded-full text-xs font-medium text-white ring-2 ring-white ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
-                        >
-                          {m.first_name.charAt(0)}
-                          {m.last_name.charAt(0)}
-                        </div>
-                      ))}
-                      {extra > 0 && (
-                        <div className="flex size-6 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold ring-2 ring-white">
-                          +{extra}
-                        </div>
-                      )}
-                    </div>
-                    <div className="date flex gap-1 items-center justify-center">
-                      <Calendar className="text-slate-500 h-4 w-5" />
-                      <p className="text-xs text-slate-500 pb-0 mb-0">
-                        {formatDate(project.end_date) ?? "N/A"}
-                      </p>
-                    </div>
+                )}
+
+                <p className="capitalize mb-2 text-wrap w-full line-clamp-2">
+                  {project.description ?? "none"}
+                </p>
+                {/* progres bar */}
+                <Progress value={56} className="mb-3 w-full max-w-sm ">
+                  <ProgressLabel className={`text-slate-400 text-sm`}>
+                    Progress
+                  </ProgressLabel>
+                  <ProgressValue />
+                </Progress>
+                <div className="bottom-part flex justify-between items-center">
+                  <div className="flex items-center -space-x-1">
+                    {visible.map((m, i) => (
+                      <div
+                        key={m.id}
+                        title={`${m.first_name} ${m.last_name}`}
+                        className={`flex size-6 items-center justify-center rounded-full text-xs font-medium text-white ring-2 ring-white ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+                      >
+                        {m.first_name.charAt(0)}
+                        {m.last_name.charAt(0)}
+                      </div>
+                    ))}
+                    {extra > 0 && (
+                      <div className="flex size-6 items-center justify-center rounded-full bg-red-500 text-xs text-white font-bold ring-2 ring-white">
+                        +{extra}
+                      </div>
+                    )}
+                  </div>
+                  <div className="date flex gap-1 items-center justify-center">
+                    <Calendar className="text-slate-500 h-4 w-5" />
+                    <p className="text-xs text-slate-500 pb-0 mb-0">
+                      {formatDate(project.end_date) ?? "N/A"}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })
+        )}
       </div>
+
+      <ConfirmRestoreDialog
+        open={!!restoreTarget}
+        onOpenChange={(open) => !open && setRestoreTarget(null)}
+        onConfirm={handleRestore}
+        itemName={restoreTarget?.name}
+        itemType="project"
+        loading={restoring}
+        error={restoreError}
+      />
     </div>
   );
 }

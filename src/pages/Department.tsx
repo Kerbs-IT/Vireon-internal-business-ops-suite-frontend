@@ -1,27 +1,85 @@
+import ArchiveToggle, {
+  ConfirmRestoreDialog,
+} from "@/components/ArchiveToggle";
 import DepartmentFormDialog from "@/components/DialogForm/DepartmentFormDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import useDepartments from "@/hooks/useDepartments";
+import useManagers from "@/hooks/useManagers";
+import api from "@/lib/api";
+import type { Department } from "@/types/leave";
 import { Building, Building2, Pencil, Plus } from "lucide-react";
+import { useState } from "react";
+
+interface DepartmentFilter {
+  archived: boolean;
+}
 
 export default function Department() {
-  const { departments, loading, refetch, error } = useDepartments();
+  // for filters
+  const [filters, setFilters] = useState<DepartmentFilter>({
+    archived: false,
+  });
+  const { departments, loading, refetch, error } = useDepartments({
+    archived: filters.archived,
+  });
+  const { managers } = useManagers();
 
+  const [restoreTarget, setRestoreTarget] = useState<Department | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+
+  const openRestore = (department: Department) => {
+    setRestoreError(null);
+    setRestoreTarget(department);
+  };
+
+  //  function to handle the restore of th department
+  const handleRestore = async () => {
+    if (!restoreTarget) return;
+
+    setRestoring(true);
+    setRestoreError(null);
+    try {
+      await api.patch(`/departments/${restoreTarget.id}/restore`);
+
+      toast.add({
+        type: "success",
+        description: `${restoreTarget.name} restored successfully`,
+      });
+      setRestoreTarget(null); // close the dialog
+      refetch(); // the restored department leaves the Archived list
+    } catch (err: any) {
+      setRestoreError(
+        err.response?.data?.message ?? "Unable to restore the department.",
+      );
+    } finally {
+      setRestoring(false);
+    }
+  };
   return (
     <div className="page ">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-md text-slate-500">
+      <div className="mb-2">
+        <p className="text-md text-slate-500 mb-1">
           Manage your organization's structure
         </p>
-        <DepartmentFormDialog
-          onSuccess={refetch}
-          trigger={
-            <Button className="bg-linear-to-r from-orange-600 to-orange-400 hover:cursor-pointer">
-              <Plus></Plus>
-              Add Department
-            </Button>
-          }
-        />
+        <div className="flex items-center justify-between w-full">
+          <ArchiveToggle
+            value={filters.archived}
+            onChange={(v) => setFilters((prev) => ({ ...prev, archived: v }))}
+          />
+          <DepartmentFormDialog
+            onSuccess={refetch}
+            managers={managers}
+            trigger={
+              <Button className="bg-linear-to-r from-orange-600 to-orange-400 hover:cursor-pointer">
+                <Plus></Plus>
+                Add Department
+              </Button>
+            }
+          />
+        </div>
       </div>
       {/* main content */}
       <div className="bg-white w-full rounded-xl shadow-xs">
@@ -109,22 +167,35 @@ export default function Department() {
                   <td className="px-4 py-3 text-sm text-slate-500 capitalize">
                     {dep.manager?.first_name ?? "none"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-500  flex items-center justify-start gap-1 ">
-                    <h3 className="font-bold text-black text-lg">
-                      {dep.employee_count ?? "0"}
-                    </h3>
-                    people
+                  <td className="px-4 py-3 text-sm text-slate-500">
+                    <div className="flex items-baseline gap-1">
+                      <span className="font-bold text-black text-lg leading-none">
+                        {dep.employee_count ?? 0}
+                      </span>
+                      <span>people</span>
+                    </div>
                   </td>
                   <td className="pr-6 py-3 text-end">
-                    <DepartmentFormDialog
-                      department={dep}
-                      onSuccess={refetch}
-                      trigger={
-                        <button className="text-slate-400  hover:text-slate-600">
-                          <Pencil className="w-4 h-4 inline" />
-                        </button>
-                      }
-                    />
+                    {filters.archived ? (
+                      <button
+                        type="button"
+                        className="text-xs font-medium text-orange-600 hover:underline"
+                        onClick={() => openRestore(dep)}
+                      >
+                        Restore
+                      </button>
+                    ) : (
+                      <DepartmentFormDialog
+                        department={dep}
+                        onSuccess={refetch}
+                        managers={managers}
+                        trigger={
+                          <button className="text-slate-400  hover:text-slate-600">
+                            <Pencil className="w-4 h-4 inline" />
+                          </button>
+                        }
+                      />
+                    )}
                   </td>
                 </tr>
               ))
@@ -132,6 +203,15 @@ export default function Department() {
           </tbody>
         </table>
       </div>
+      <ConfirmRestoreDialog
+        open={!!restoreTarget}
+        onOpenChange={(open) => !open && setRestoreTarget(null)}
+        onConfirm={handleRestore}
+        itemName={restoreTarget?.name}
+        itemType="department"
+        loading={restoring}
+        error={restoreError}
+      />
     </div>
   );
 }

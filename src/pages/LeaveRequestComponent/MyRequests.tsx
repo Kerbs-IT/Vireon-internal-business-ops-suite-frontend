@@ -4,14 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import api from "@/lib/api";
-import { CalendarDays, HeartPulse, Plus, TreePalm } from "lucide-react";
+import { CalendarDays, Eye, HeartPulse, Pencil, Plus, TreePalm } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { countDays, formatDate, statusStyles, type LeaveStatus } from "@/lib/leave";
+import ViewLeaveRequestDialog from "@/components/ViewLeaveRequestDialog";
 
 interface LeaveRequest {
   id: number;
   start_date: string;
   end_date: string;
-  status: "pending" | "approved" | "rejected";
+  reason: string; // new
+  review_comment?: string | null; // new
+  status: LeaveStatus;
   leave_type: { id: number; name: string } | null;
 }
 
@@ -21,25 +25,6 @@ const typeIcons: Record<string, LucideIcon> = {
   "Vacation Leave": TreePalm,
 };
 
-const statusStyles: Record<LeaveRequest["status"], string> = {
-  pending: "bg-yellow-100 text-yellow-900 border-yellow-200",
-  approved: "bg-green-100 text-green-900 border-green-200",
-  rejected: "bg-red-100 text-red-900 border-red-200",
-};
-
-const parseDate = (date: string) => new Date(`${date.slice(0, 10)}T00:00:00`);
-
-export const formatDate = (date: string) =>
-  parseDate(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-export const countDays = (start: string, end: string) =>
-  Math.round(
-    (parseDate(end).getTime() - parseDate(start).getTime()) / 86400000,
-  ) + 1;
 
 
 function RequestSkeleton() {
@@ -125,11 +110,42 @@ export default function MyRequests() {
                     </h3>
                   </div>
                 </div>
-                <span
-                  className={`text-xs p-2 rounded-2xl border capitalize ${statusStyles[req.status]}`}
-                >
-                  {req.status}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`text-xs p-2 rounded-2xl border capitalize ${statusStyles[req.status]}`}
+                  >
+                    {req.status}
+                  </span>
+
+                  <ViewLeaveRequestDialog
+                    leaveRequest={req}
+                    trigger={
+                      <button
+                        type="button"
+                        aria-label="View request"
+                        className="hover:cursor-pointer"
+                      >
+                        <Eye className="h-4 w-4 text-slate-500 hover:text-slate-800" />
+                      </button>
+                    }
+                  />
+
+                  {req.status === "pending" && (
+                    <RequestLeaveFormDialog
+                      leaveRequest={req}
+                      onSuccess={fetchRequests}
+                      trigger={
+                        <button
+                          type="button"
+                          aria-label="Edit request"
+                          className="hover:cursor-pointer"
+                        >
+                          <Pencil className="h-4 w-4 text-slate-500 hover:text-slate-800" />
+                        </button>
+                      }
+                    />
+                  )}
+                </div>
               </div>
             );
           })

@@ -1,3 +1,13 @@
+export interface department {
+  id: number;
+  name: string;
+  'manager_id':number
+}
+export interface role{
+   id: number;
+  name: string;
+}
+
 export interface Employee {
   id: number;
   first_name: string;
@@ -8,6 +18,8 @@ export interface Employee {
   position: string;
   date_hired: string;
   status: "active" | "inactive";
+  department?: department | undefined;
+  role?: role | undefined;
 }
 
 export interface EmployeeTaskOverview extends Employee {
@@ -15,3 +27,7 @@ export interface EmployeeTaskOverview extends Employee {
   completed_tasks_count: number;
   overdue_tasks_count: number;
 }
+
+export type ManagerOption = Pick<Employee, "id" | "first_name" | "last_name"> & {
+  position?: string;
+};
