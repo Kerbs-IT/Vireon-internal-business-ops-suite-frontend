@@ -17,6 +17,7 @@ import LeaveRequest from "./pages/LeaveRequest";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Reports from "./pages/Reports";
+import AiAssistant from "./pages/AiAssistant";
 
 
 function App() {
@@ -90,8 +91,8 @@ function App() {
           <Route
             path="/reports"
             element={
-              <ProtectedRoute allowedRoles={['admin','manager']}>
-              <Reports />
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <Reports />
               </ProtectedRoute>
             }
           />
@@ -103,6 +104,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/ai-assistant"
+            element={
+              <ProtectedRoute>
+                <AiAssistant />
+              </ProtectedRoute>
+            }
+          />
+         
           <Route path="*" element={<NotFound />}></Route>
         </Route>
       </Routes>

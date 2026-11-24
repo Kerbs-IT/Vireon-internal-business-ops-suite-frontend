@@ -1,0 +1,136 @@
+// 1. Overdue tasks (overdue_tasks)
+[
+    {
+        "intent": "overdue_tasks",
+        "today": "2026-11-23",
+        "requester": { "name": "Mark Jose", "role": "employee" },
+        "params": {},
+        "count": 2,
+        "truncated": false,
+        "result": [
+            { "title": "Create budget plan", "project": "Vireon", "status": "in_progress", "due_date": "2026-11-20", "due_weekday": "Friday", "days_overdue": 3 },
+            { "title": "Design the ERD", "project": "Vireon", "status": "todo", "due_date": "2026-11-22", "due_weekday": "Sunday", "days_overdue": 1 }
+        ]
+    }
+]
+// Backend filter: assigned_to = requester AND status != 'done' AND due_date < today, sorted by most overdue first.
+
+// 2. Due this week (tasks_due_this_week)
+[
+    {
+  "intent": "tasks_due_this_week",
+  "today": "2026-11-23",
+  "requester": { "name": "Mark Jose", "role": "employee" },
+  "params": { "week_start": "2026-11-23", "week_end": "2026-11-29" },
+  "count": 2,
+  "truncated": false,
+  "result": [
+    { "title": "Write API docs", "project": "Vireon", "status": "in_progress", "due_date": "2026-11-25", "due_weekday": "Wednesday", "days_overdue": 0 },
+    { "title": "Deploy staging", "project": "Vireon", "status": "todo", "due_date": "2026-11-27", "due_weekday": "Friday", "days_overdue": 0 }
+  ]
+}
+]
+// Backend filter: same as #1, but due_date BETWEEN week_start AND week_end, sorted by due_date. The task shape is identical to #1, so you can reuse one formatter function.
+// 3. Leave balance (leave_balance)
+[
+    {
+  "intent": "leave_balance",
+  "today": "2026-11-23",
+  "requester": { "name": "Mark Jose", "role": "employee" },
+  "params": { "period": "2026-11", "period_type": "monthly" },
+  "count": 1,
+  "truncated": false,
+  "result": {
+    "allowance": 4,
+    "used": 2,
+    "remaining": 2,
+    "pending_days": 1,
+    "approved_requests": [
+      { "leave_type": "Vacation", "start_date": "2026-11-04", "end_date": "2026-11-05", "working_days": 2 }
+    ],
+    "pending_requests": [
+      { "leave_type": "Vacation", "start_date": "2026-11-30", "end_date": "2026-11-30", "working_days": 1 }
+    ]
+  }
+}
+]
+// 4. Project status (project_status)
+{
+  "intent": "project_status",
+  "today": "2026-11-23",
+  "requester": { "name": "Mark Jose", "role": "employee" },
+  "params": { "project_name": "Vireon" },
+  "count": 1,
+  "truncated": false,
+  "status":"ok",
+  "result": {
+    "name": "Vireon: Business Internal Suite",
+    "status": "active",
+    "total_tasks": 20,
+    "completed_tasks": 10,
+    "open_tasks_count": 10,
+    "overdue_tasks": 2,
+    "percent_complete": 50,
+    "open_tasks": [
+      { "title": "Create budget plan", "assignee": "Mark Jose", "status": "in_progress", "due_date": "2026-11-20", "due_weekday": "Friday", "days_overdue": 3 },
+      { "title": "Write API docs", "assignee": "Maria Espiritu", "status": "in_progress", "due_date": "2026-11-25", "due_weekday": "Wednesday", "days_overdue": 0 }
+    ],
+    "open_tasks_shown": 2,
+    "open_tasks_truncated": false
+  }
+}
+// 5. Who is on leave (team_on_leave)
+
+[
+    {
+  "intent": "team_on_leave",
+  "today": "2026-11-23",
+  "requester": { "name": "Mark Jose", "role": "employee" },
+  "params": { "range_start": "2026-11-23", "range_end": "2026-11-29", "scope": "department" },
+  "count": 2,
+  "truncated": false,
+  "result": [
+    { "name": "Maria Espiritu", "position": "Junior Developer", "start_date": "2026-11-24", "end_date": "2026-11-25", "working_days": 2, "on_leave_today": false },
+    { "name": "Janie Espiritu", "position": "Junior Developer", "start_date": "2026-11-23", "end_date": "2026-11-23", "working_days": 1, "on_leave_today": true }
+  ]
+}
+]
+// when AI find more project with same name
+[
+    {
+  "intent": "project_status",
+  "today": "2026-11-23",
+  "requester": { "name": "Mark Jose", "role": "employee" },
+  "params": { "project_name": "suite" },
+  "count": 3,
+  "truncated": false,
+  "status": "needs_clarification",
+  "result": {
+    "reason": "multiple_projects_matched",
+    "matches": ["Vireon: Business Internal Suite", "Office Suite Migration", "HR Suite Rollout"]
+  }
+}
+]
+
+// weekly report structure
+{
+  "intent": "period_summary",
+  "status": "ok",
+  "today": "2026-11-23",
+  "period": { "start": "2026-11-09", "end": "2026-11-22", "days": 14, "label": "last 2 weeks" },
+  "employee": { "name": "Mark Jose", "position": "Senior Developer" },
+  "counts": { "completed": 3, "completed_late": 1, "open": 4, "overdue": 2 },
+  "completed_by_project": [ { "project": "Vireon", "count": 3 } ],
+  "tasks_completed": [
+    { "title": "Design the ERD", "project": "Vireon", "due_date": "2026-11-18", "completed_on": "2026-11-17", "days_late": 0 }
+  ],
+  "tasks_open": [
+    { "title": "Create budget plan", "project": "Vireon", "status": "in_progress", "due_date": "2026-11-20", "due_weekday": "Friday", "days_overdue": 3 }
+  ],
+  "tasks_open_truncated": false,
+  "leave": {
+    "days_taken_in_period": 1,
+    "requests_in_period": [ { "leave_type": "Vacation", "start_date": "2026-11-18", "end_date": "2026-11-18", "working_days": 1 } ],
+    "balance": { "period": "2026-11", "allowance": 4, "used": 2, "remaining": 2 }
+  }
+}
