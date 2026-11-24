@@ -31,9 +31,9 @@ const navItems: NavItem[] = [
     label: "Reports",
     path: "/reports",
     icon: <ChartBarDecreasing />,
-    roles: ["admin","manager"],
+    roles: ["admin", "manager"],
   },
-  { label: "AI Assistant", path: "/ai-assistant", icon: <Bot /> },
+  { label: "AI Assistant", path: "/ai-assistant", icon: <Bot /> ,},
 ];
 
 
