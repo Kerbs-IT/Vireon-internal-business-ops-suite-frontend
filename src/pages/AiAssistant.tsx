@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, type FormEvent, useContext } from "react";
 import { isAxiosError } from "axios";
 import api from "@/lib/api";
 import { AuthContext } from "@/context/AuthContext";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 
 type Role = "user" | "assistant";
 
@@ -54,7 +56,7 @@ function errorText(err: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-function SparkleIcon({ className = "size-4" }: { className?: string }) {
+export function SparkleIcon({ className = "size-4" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -67,7 +69,7 @@ function SparkleIcon({ className = "size-4" }: { className?: string }) {
   );
 }
 
-function Avatar({ role,first_name }: { role: Role, first_name : string }) {
+function Avatar({ role, first_name }: { role: Role; first_name: string }) {
   if (role === "assistant") {
     return (
       <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-sm">
@@ -82,13 +84,13 @@ function Avatar({ role,first_name }: { role: Role, first_name : string }) {
   );
 }
 
-export default function AiAssistant() {
+export default function AiAssistant({ compact = false }: { compact?: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-    const bottomRef = useRef<HTMLDivElement>(null);
-    const { user } = useContext(AuthContext);
-
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const lastQuestion = useRef<string>("");
+  const { user } = useContext(AuthContext);
 
   // Scroll to the newest message whenever the chat changes.
   useEffect(() => {
@@ -99,9 +101,16 @@ export default function AiAssistant() {
     setMessages((prev) => [...prev, { ...msg, time: now() }]);
   }
 
-  async function ask(question: string) {
+  async function ask(question: string, remember: boolean = true) {
     const q = question.trim();
     if (!q || loading) return;
+
+    if (remember) lastQuestion.current = q;
+
+    const history = messages
+      .filter((m) => m.role === "user")
+      .slice(-3)
+      .map((m) => m.text);
 
     addMessage({ role: "user", text: q });
     setInput("");
@@ -110,7 +119,7 @@ export default function AiAssistant() {
     try {
       const { data } = await api.post<QueryResponse>(
         "/ai/query",
-        { question: q },
+        { question: q, history },
         { timeout: 40000 },
       );
       addMessage({
@@ -154,7 +163,9 @@ export default function AiAssistant() {
   return (
     <div className="flex h-full min-h-0 flex-col bg-gradient-to-br from-white via-white to-orange-50/50">
       {/* Messages / empty state */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto ${compact ? "px-3 py-4" : "px-4 py-6 sm:px-8"}`}
+      >
         {messages.length === 0 ? (
           <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center">
             <div className="mb-5 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-lg shadow-orange-500/30">
@@ -207,7 +218,7 @@ export default function AiAssistant() {
                     className={`flex max-w-[80%] flex-col ${isUser ? "items-end" : "items-start"}`}
                   >
                     <div
-                      className={`whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+                      className={` rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
                         isUser
                           ? "rounded-tr-md bg-gradient-to-br from-indigo-400 to-violet-500 text-white"
                           : m.error
@@ -215,7 +226,15 @@ export default function AiAssistant() {
                             : "rounded-tl-md border border-gray-200 bg-white text-gray-800"
                       }`}
                     >
-                      {m.text}
+                      {isUser || m.error ? (
+                        m.text
+                      ) : (
+                        <div className="[&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-0.5 [&_strong]:font-semibold">
+                          <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                            {m.text}
+                          </ReactMarkdown>
+                        </div>
+                      )}
 
                       {m.matches && m.matches.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -225,7 +244,8 @@ export default function AiAssistant() {
                               disabled={loading}
                               onClick={() =>
                                 ask(
-                                  `What's the status of the project "${name}"?`,
+                                  `${lastQuestion.current} (project: "${name}")`,
+                                  false,
                                 )
                               }
                               className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -270,7 +290,7 @@ export default function AiAssistant() {
       </div>
 
       {/* Input */}
-      <div className="px-4 pb-3 pt-2 sm:px-8">
+      <div className={compact ? "px-3 pb-2 pt-1" : "px-4 pb-3 pt-2 sm:px-8"}>
         <form
           onSubmit={handleSubmit}
           className="mx-auto flex max-w-3xl items-center gap-2 rounded-xl border border-gray-200 bg-white p-2 shadow-sm focus-within:border-orange-300 focus-within:ring-2 focus-within:ring-orange-100"

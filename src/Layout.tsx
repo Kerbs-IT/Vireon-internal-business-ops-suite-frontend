@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 import { Toaster } from "./components/ui/toast";
+import AiChatWidget from "./pages/AiChatWidget";
 
 export function Layout(){
 
@@ -13,6 +14,7 @@ export function Layout(){
           <Topbar />
           <main className="flex-1 p-6 bg-slate-100 overflow-y-auto">
             <Outlet />
+            <AiChatWidget />
             <Toaster />
           </main>
         </div>
